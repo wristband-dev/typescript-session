@@ -1,6 +1,3 @@
-/**
- * Main getSession() function
- */
 import { PlatformDetector } from './adapters/base';
 import { NodeAdapter } from './adapters/node';
 import { WebStandardAdapter } from './adapters/web-standard';

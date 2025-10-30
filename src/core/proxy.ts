@@ -1,6 +1,3 @@
-/**
- * Proxy wrapper for seamless session data access
- */
 import { SessionError, SessionErrorCode } from '../error';
 import { Session, SessionData } from '../types';
 import { SessionImpl } from './session';

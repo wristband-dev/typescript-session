@@ -1,6 +1,3 @@
-/**
- * Web Crypto API utilities for session encryption/decryption
- */
 import { Base64 } from './base64';
 import { SessionData } from '../types';
 import { SessionCryptoError, SessionCryptoErrorCode } from '../error';

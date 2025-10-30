@@ -1,6 +1,3 @@
-/**
- * Base adapter interface and utilities
- */
 import type { IncomingMessage, ServerResponse } from 'http';
 
 import { CookieOptions, SessionAdapter } from '../types';

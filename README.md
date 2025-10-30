@@ -72,7 +72,7 @@ Consider server-side sessions (Redis, database) if you need:
 
 Browser cookies are limited to 4KB total (per RFC 6265). After encryption overhead and cookie attributes, you have **~3KB for actual session data**.
 
-**What fits in 3KB:**
+**What fits in ~3KB:**
 ```typescript
 // ✅ This fits comfortably
 {
@@ -132,6 +132,7 @@ const cart = await db.getCart(session.cartId);
       - [get(key)](#getkey)
       - [set(key, value)](#setkey-value)
       - [delete(key)](#deletekey)
+      - [toJSON()](#tojson)
     - [Node.js Methods](#nodejs-methods)
       - [save()](#save)
       - [destroy()](#destroy)
@@ -345,10 +346,6 @@ export async function POST(request: Request) {
 
 <br>
 
----
-
-<br>
-
 ## Platform Examples
 
 ### Express (Node.js)
@@ -399,7 +396,7 @@ app.post('/logout', async (req, res) => {
 
 > **Performance Optimization**
 > 
-> For production Express apps, consider using `getSessionSync()` with deferred mode to batch session writes. See [Deferred Mode](#deferred-mode-express-performance) for details.
+> For production Express apps, consider using `getSessionSync()` with deferred mode to batch session writes. See [Deferred Mode](#deferred-mode-nodejs-performance) for details.
 
 <br>
 
@@ -471,14 +468,12 @@ export const config = {
 };
 ```
 
-**App Router - Server Action:**
+**Server Actions:**
 
-Server Actions require manual cookie management since they can't return Response objects. Use `getCookieDataForSave()` to get cookie data that can be set via Next.js's cookie store.
-
-For example, you can create helper functions for managing sessions in server actions:
+Server Actions can't return Response objects, so you need to manually manage cookies via [Next.js's cookies() API](https://nextjs.org/docs/app/api-reference/functions/cookies). You can build helper functions that use `getCookieDataForSave()` and `getCookieDataForDestroy()`:
 
 ```typescript
-// lib/session.ts
+// lib/session-helpers.ts
 import { cookies } from 'next/headers';
 import { 
   getSession, 
@@ -487,13 +482,13 @@ import {
   SessionData 
 } from '@wristband/typescript-session';
 
-// Next.js cookie store interface (duck-typed).
+// Next.js cookie store interface (duck-typed)
 interface NextJsCookieStore {
   get(name: string): { value: string } | undefined;
   set(name: string, value: string, options?: any): void;
 }
 
-// Get session for Server Actions and Components.
+// Get session for Server Actions
 export async function getSessionForServer<T extends SessionData = SessionData>(
   cookieStore: NextJsCookieStore,
   options: SessionOptions
@@ -501,15 +496,15 @@ export async function getSessionForServer<T extends SessionData = SessionData>(
   const cookieName = options.cookieName || 'session'; // SDK Default
   const cookieValue = cookieStore.get(cookieName)?.value;
 
-  // Create a real Web Request
+  // Create a real Web Request with the session cookie
   const request = new Request('https://placeholder.local', {
     headers: { cookie: cookieValue ? `${cookieName}=${cookieValue}` : '' },
   });
 
-  return await getWristbandSession<T>(request, options);
+  return await getSession<T>(request, options);
 }
 
-// Save session for Server Actions and Server Components.
+// Save session for Server Actions
 export async function saveSessionForServer<T extends SessionData = SessionData>(
   cookieStore: NextJsCookieStore,
   session: Session<T> & T
@@ -519,9 +514,20 @@ export async function saveSessionForServer<T extends SessionData = SessionData>(
     cookieStore.set(name, value, options);
   }
 }
+
+// Destroy session for Server Actions
+export function destroySessionForServer<T extends SessionData = SessionData>(
+  cookieStore: NextJsCookieStore,
+  session: Session<T> & T
+): void {
+  const cookieData = session.getCookieDataForDestroy();
+  for (const { name, value, options } of cookieData) {
+    cookieStore.set(name, value, options);
+  }
+}
 ```
 
-Then you can use those functions in your server action code:
+Then use the helpers in your Server Actions:
 
 ```typescript
 // app/actions.ts
@@ -529,26 +535,54 @@ Then you can use those functions in your server action code:
 
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
-import { getSessionForServer, saveSessionForServer } from '@/lib/session';
+import {
+  destroySessionForServer,
+  getSessionForServer,
+  saveSessionForServer
+} from '@/lib/session';
 
 const sessionOptions = {
   secrets: 'your-secret-key-min-32-characters-long',
   maxAge: 86400,
 };
 
+export async function loginAction(formData: FormData) {
+  const cookieStore = await cookies();
+  const session = await getSessionForServer(cookieStore, sessionOptions);
+  
+  // Your auth logic
+  const email = formData.get('email') as string;
+  const password = formData.get('password') as string;
+  const user = await authenticateUser(email, password);
+  
+  // Save user to session
+  session.userId = user.id;
+  session.email = user.email;
+  
+  await saveSessionForServer(cookieStore, session);
+  redirect('/dashboard');
+}
+
 export async function updatePreferences(theme: string) {
   const cookieStore = await cookies();
   const session = await getSessionForServer(cookieStore, sessionOptions);
   
   if (!session.userId) {
-    throw new Error('Not authenticated');
+    redirect('/login');
   }
   
-  // Modify session
-  session.theme = theme;
+  // Update session
+  session.preferences = { theme };
   
-  // Save session
   await saveSessionForServer(cookieStore, session);
+}
+
+export async function logoutAction() {
+  const cookieStore = await cookies();
+  const session = await getSessionForServer(cookieStore, sessionOptions);
+  
+  destroySessionForServer(cookieStore, session);
+  redirect('/login');
 }
 ```
 
@@ -599,6 +633,10 @@ export default {
   },
 };
 ```
+
+> **💡 Learn More**
+>
+> For more documentation on `getCookieDataForSave()` and `getCookieDataForDestroy()`, see the [Next.js Server Actions Methods](#nextjs-server-actions-methods) section in the API Reference.
 
 <br>
 
@@ -825,6 +863,29 @@ session.delete('lastVisit');
 
 <br>
 
+##### `toJSON()`
+
+Returns the session data as a plain object. This method is automatically called by `JSON.stringify()` and enables clean serialization of the session.
+
+```typescript
+const sessionData = session.toJSON();
+console.log(sessionData); // { userId: '123', theme: 'dark', ... }
+
+// Also called automatically by JSON.stringify()
+const json = JSON.stringify(session);
+console.log(json); // '{"userId":"123","theme":"dark",...}'
+```
+
+**Parameters:**
+
+None
+
+**Returns:**
+
+`T` - A plain object containing all session data fields
+
+<br>
+
 #### Node.js Methods
 
 These methods work in Node.js environments (Express, Next.js Pages Router, etc.):
@@ -855,7 +916,7 @@ await session.save();
 
 ##### `destroy()`
 
-Deletes the underlying seession data as well as the session cookie from the response (mutates the response object).  If `enableCsrfProtection` is `true` in the SDK configuration, then the CSRF cookie is deleted as well.
+Deletes the underlying session data as well as the session cookie from the response (mutates the response object).  If `enableCsrfProtection` is `true` in the SDK configuration, then the CSRF cookie is deleted as well.
 
 > 💡 For Edge runtimes, use `destroyToResponse()`.
 
@@ -982,11 +1043,14 @@ return session.destroyToResponse(response);
 
 #### Next.js Server Actions Methods
 
-These methods are specifically for Next.js Server Actions where you need manual cookie setting.
+These are low-level methods for framework adapters that require manual cookie management. Next.js Server Actions can't return Response objects, so you can't use `saveToResponse()` or `destroyToResponse()`. Instead, these methods return cookie data that can be set via Next.js's `cookies()` API.
+
+> 💡 Looking for examples?
+> See the [Next.js Platform Examples](#nextjs) section for complete helper patterns and usage examples with Server Actions.
 
 ##### `getCookieDataForSave()`
 
-Returns prepared cookie data for manual cookie setting (e.g., Next.js `cookies().set()`).
+Returns prepared cookie data for manual cookie setting (e.g., Next.js `cookies().set()`). If `enableCsrfProtection` is `true`, it will automatically generate a CSRF token and include the CSRF cookie data.
 
 ```typescript
 'use server';
@@ -1007,9 +1071,28 @@ export async function loginAction() {
 
 **Returns:**
 
-`Promise<Array<{ name: string; value: string; options: CookieOptions }>>`
+`Promise<Array<{ name: string; value: string; options: CookieOptions }>>` - 
+A Promise that resolves to an array of cookie objects, where each object contains:
 
-**Throws:** [`SessionError`](#error-handling) if:
+- name (string): The cookie name (e.g., `'session'` or `'CSRF-TOKEN'`)
+- value (string): The encrypted session data (for session cookie) or CSRF token value (for CSRF cookie)
+- options (`CookieOptions`): Cookie configuration object with the following properties:
+
+  - maxAge (number): Cookie expiration time in seconds
+  - domain (string | undefined): Cookie domain attribute
+  - path (string): Cookie path attribute (default: '/')
+  - secure (boolean): Requires HTTPS when true (default: true)
+  - httpOnly (boolean): Prevents JavaScript access when true (default: true)
+  - sameSite ('strict' | 'lax' | 'none'): Controls cross-site request behavior (default: 'lax')
+
+The returned array will contain:
+
+- Always: 1 session cookie object
+- Conditionally: 1 CSRF cookie object (if `enableCsrfProtection` is `true`)
+
+**Throws:**
+
+[`SessionError`](#error-handling) if:
 
 - Session has been destroyed
 - Encryption fails
@@ -1018,28 +1101,28 @@ export async function loginAction() {
 
 ##### `getCookieDataForDestroy()`
 
-Returns prepared cookie deletion data for manual cookie deletion.
+Returns prepared cookie deletion data for manual cookie deletion. Returns cookies with empty values and expiration dates in the past. If `enableCsrfProtection` is `true`, includes CSRF cookie deletion data.
 
 ```typescript
-'use server';
-import { cookies } from 'next/headers';
+const cookieData = session.getCookieDataForDestroy();
+const cookieStore = await cookies();
 
-export async function logoutAction() {
-  const session = await getSession(/* ... */);
-  session.destroy();
-  
-  const cookieData = session.getCookieDataForDestroy();
-  const cookieStore = await cookies();
-  
-  for (const { name, value, options } of cookieData) {
-    cookieStore.set(name, value, options);
-  }
+for (const { name, value, options } of cookieData) {
+  cookieStore.set(name, value, options);
 }
 ```
 
 **Returns:**
 
-`Array<{ name: string; value: string; options: CookieOptions }>`
+`Array<{ name: string; value: string; options: CookieOptions }>` - An array of cookie deletion objects with the same structure as `getCookieDataForSave()`, but with:
+
+- value: Empty string ('')
+- options.maxAge: Set to 0 to expire the cookie immediately
+
+The returned array will contain:
+
+- Always: 1 session cookie deletion object
+- Conditionally: 1 CSRF cookie deletion object (only if `enableCsrfProtection` is `true`)
 
 <br>
 
@@ -1812,9 +1895,9 @@ const userResponse = await fetch('https://your-app.wristband.dev/api/v1/users/me
 
 This session SDK is embedded in the following Wristband authentication SDKs, providing both authentication and session management in a single dependency:
 
-- **[@wristband/express-auth](https://github.com/wristband-dev/express-auth)** - Coming soon
-- **[@wristband/nextjs-auth](https://github.com/wristband-dev/nextjs-auth)** - Coming soon  
-- **[@wristband/nestjs-auth](https://github.com/wristband-dev/nestjs-auth)** - Coming soon
+- **[@wristband/express-auth](https://github.com/wristband-dev/express-auth)** - Coming soon!
+- **[@wristband/nextjs-auth](https://github.com/wristband-dev/nextjs-auth)** - Coming soon!
+- **[@wristband/nestjs-auth](https://github.com/wristband-dev/nestjs-auth)** - Coming soon!
 
 If you're using Wristband for authentication, we recommend using one of these framework-specific SDKs instead of installing the session SDK separately. They provide a complete, integrated solution for both authentication and session management.
 

@@ -54,15 +54,7 @@ export enum SessionErrorCode {
  * ```
  */
 export class SessionError extends Error {
-  /**
-   * The error code identifying the type of failure.
-   */
   public readonly code: SessionErrorCode;
-
-  /**
-   * Optional underlying error that caused this session error.
-   * Useful for debugging and logging internal failures.
-   */
   public readonly cause?: Error;
 
   /**
@@ -88,8 +80,8 @@ export class SessionError extends Error {
   }
 
   /**
-   * Returns a JSON-serializable representation of the error.
-   * Useful for logging and API responses.
+   * Returns a JSON-serializable representation of the error. The cause is omitted deliberately
+   * to avoid leaking internal details.
    * 
    * @returns Object containing error code and message (excludes cause for security)
    * 
@@ -104,46 +96,15 @@ export class SessionError extends Error {
    * ```
    */
   toJSON(): { code: SessionErrorCode; message: string } {
-    // Deliberately omit 'cause' to avoid leaking internal details
     return { code: this.code, message: this.message };
-  }
-
-  /**
-   * Returns a detailed object for internal logging.
-   * Includes the error cause chain for debugging.
-   * 
-   * @returns Object with full error details including cause
-   * 
-   * @example
-   * ```typescript
-   * catch (error) {
-   *   if (error instanceof SessionError) {
-   *     logger.error('Session operation failed', error.toLogObject());
-   *   }
-   * }
-   * ```
-   */
-  toLogObject(): { code: SessionErrorCode; message: string; cause?: string; stack?: string; } {
-    const result: { code: SessionErrorCode; message: string; cause?: string; stack?: string; } = {
-      code: this.code,
-      message: this.message,
-    };
-
-    if (this.cause?.message !== undefined) {
-      result.cause = this.cause.message;
-    }
-
-    if (this.stack !== undefined) {
-      result.stack = this.stack;
-    }
-
-    return result;
   }
 }
 
 /**
- * Error codes for SessionCrypto operations. Provides structured identifiers and raw error messages
- * for specific failure cases while avoiding leaking sensitive info.
+ * Error codes for SessionCrypto operations.
+ * 
+ * Provides structured identifiers for cryptographic failures without
+ * exposing sensitive internal implementation details.
  */
 export enum SessionCryptoErrorCode {
   // --- Input validation ---
@@ -180,18 +141,52 @@ export enum SessionCryptoErrorCode {
 }
 
 /**
- * Error codes for SessionCrypto operations used to identify specific failure
- * cases without leaking sensitive info.
+ * Error class for cryptographic operations.
+ * 
+ * Internal error type used by SessionCrypto for encryption/decryption failures.
+ * These errors are typically wrapped in SessionError before being exposed to users,
+ * but can be inspected via the error cause chain for debugging.
+ * 
+ * @internal
+ * 
+ * @example
+ * ```typescript
+ * try {
+ *   await SessionCrypto.decrypt(data, secret, maxAge);
+ * } catch (error) {
+ *   if (error instanceof SessionCryptoError) {
+ *     console.error('Crypto error:', error.code);
+ *     if (error.cause) {
+ *       console.error('Caused by:', error.cause);
+ *     }
+ *   }
+ * }
+ * ```
  */
 export class SessionCryptoError extends Error {
-  /** Optional inner/cause error */
-  public cause?: Error;
+  public readonly code: SessionCryptoErrorCode;
+  public readonly cause?: Error;
 
-  constructor(public code: SessionCryptoErrorCode, message?: string, cause?: unknown) {
+  /**
+   * Create a new SessionCryptoError.
+   * 
+   * @param code - The error code identifying the failure type
+   * @param message - Human-readable error message (defaults to code if not provided)
+   * @param cause - Optional underlying error for debugging
+   */
+  constructor(code: SessionCryptoErrorCode, message?: string, cause?: unknown) {
     super(message ?? code);
+
+    this.name = 'SessionCryptoError';
+    this.code = code;
 
     if (cause) {
       this.cause = cause instanceof Error ? cause : new Error(String(cause));
+    }
+
+    // Maintain proper stack trace (V8 engines only)
+    if (Error.captureStackTrace) {
+      Error.captureStackTrace(this, SessionCryptoError);
     }
   }
 }

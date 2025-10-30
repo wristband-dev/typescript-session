@@ -1,6 +1,3 @@
-/**
- * Web standard Request/Response adapter
- */
 import { BaseAdapter } from './base';
 import { CookieParser } from '../core/cookie-parser';
 import { SessionError, SessionErrorCode } from '../error';

@@ -1,10 +1,8 @@
-/**
- * Main Session class implementation
- */
 import { CookieBuilder } from './cookie-builder';
 import { CookieParser } from './cookie-parser';
-import { createCsrfToken } from '../csrf';
+import { createCsrfToken } from './csrf';
 import { SessionCrypto } from './crypto';
+import { SessionError, SessionErrorCode } from '../error';
 import {
   CallbackData,
   CookieOptions,
@@ -15,7 +13,6 @@ import {
   SessionResponse,
   TokenResponse
 } from '../types';
-import { SessionError, SessionErrorCode } from '../error';
 
 /**
  * Internal implementation of the Session interface.
@@ -184,7 +181,7 @@ export class SessionImpl<T extends SessionData = SessionData> implements Session
    * - flush() or flushSync() actually encrypts and writes cookies ONCE
    * - Performance improvement when save() is called multiple times in a single request
    * 
-   * ⚠️ Once enabled, deferred mode cannot be disabled for this session instance.
+   * ⚠️ Once enabled, deferred mode cannot be disabled for the session instance.
    * 
    * @example
    * ```typescript
@@ -220,7 +217,7 @@ export class SessionImpl<T extends SessionData = SessionData> implements Session
    * 
    * For Edge/browser environments without response object access, use saveToResponse() instead.
    * 
-   * @throws Error if session is destroyed, no response object available, or not in Node.js
+   * @throws {SessionError} If session is destroyed or no response object available.
    * 
    * @example
    * ```typescript
@@ -296,7 +293,7 @@ export class SessionImpl<T extends SessionData = SessionData> implements Session
    * This method uses async encryption, so it works in all environments.
    * For synchronous flushing in Node.js, use flushSync() instead.
    * 
-   * @throws Error if deferred mode is not enabled or response object is unavailable
+   * @throws {SessionError} If deferred mode is not enabled or response object is unavailable.
    * 
    * @example
    * ```typescript
@@ -339,7 +336,7 @@ export class SessionImpl<T extends SessionData = SessionData> implements Session
    * 
    * ⚠️ Requires Node.js crypto. For Edge/browser, use async flush() instead.
    * 
-   * @throws {Error} If node:crypto is not available or deferred mode not enabled
+   * @throws {SessionError} If node:crypto is not available or deferred mode not enabled
    */
   flushSync(): void {
     if (!this.#deferredMode) {
@@ -863,7 +860,7 @@ export class SessionImpl<T extends SessionData = SessionData> implements Session
    * @param options - Normalized session configuration
    * @returns SessionImpl instance with decrypted data or empty data if decryption failed
    * 
-   * @throws Error if node:crypto is not available
+   * @throws {SessionError} If node:crypto is not available.
    */
   static fromCookieSync<T extends SessionData>(
     cookieValue: string,

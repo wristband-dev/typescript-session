@@ -1,8 +1,4 @@
 /**
- * Core session SDK types
- */
-
-/**
  * Represents the `SameSite` attribute for cookies, which controls 
  * whether cookies are sent along with cross-site requests.
  *

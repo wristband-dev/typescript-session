@@ -1,6 +1,3 @@
-/**
- * Node.js IncomingMessage/ServerResponse adapter
- */
 import type { IncomingMessage, ServerResponse } from 'http';
 
 import { BaseAdapter } from './base';
