@@ -35,7 +35,7 @@ This SDK provides enterprise-grade session management with:
 - **🌐 Universal Runtime Support** - Node.js, Cloudflare Workers, Vercel Edge, and more
 - **📦 Zero Dependencies** - Pure TypeScript with web standards
 - **🔒 Secure Encryption** - AES-256-GCM encryption with Web Crypto API
-- **🔄 Key Rotation** - Seamless secret rotation without invalidating sessions
+- **🔄 Secret Key Rotation** - Seamless secret rotation without invalidating sessions
 - **⚡ High Performance** - Deferred mode prevents redundant encryption in Node.js
 - **🛡️ CSRF Protection** - Optional token-based CSRF protection
 
