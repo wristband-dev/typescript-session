@@ -330,7 +330,6 @@ export class SessionCrypto {
       // Extract components
       const iv = bytes.slice(9, 21);
       const encryptedData = bytes.slice(21);
-
       const key = await this.deriveKey(secret);
       
       const decrypted = await webCrypto.subtle.decrypt(

@@ -64,9 +64,9 @@ export class CookieParser {
    *   maxAge: 3600,
    *   secure: true,
    *   httpOnly: true,
-   *   sameSite: 'lax'
+   *   sameSite: 'Lax'
    * });
-   * // Returns: "session=abc123; Path=/; SameSite=lax; Max-Age=3600; Secure; HttpOnly"
+   * // Returns: "session=abc123; Path=/; SameSite=Lax; Max-Age=3600; Secure; HttpOnly"
    * ```
    */
   static serialize(name: string, value: string, options: CookieOptions): string {
@@ -116,9 +116,9 @@ export class CookieParser {
    *   path: '/',
    *   secure: true,
    *   httpOnly: true,
-   *   sameSite: 'lax'
+   *   sameSite: 'Lax'
    * });
-   * // Returns: "session=; Path=/; SameSite=lax; Max-Age=0; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Secure; HttpOnly"
+   * // Returns: "session=; Path=/; SameSite=Lax; Max-Age=0; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Secure; HttpOnly"
    * ```
    */
   static createDestroyCookie(name: string, options: CookieOptions): string {

@@ -14,6 +14,14 @@ import { SessionImpl } from './session';
  * @returns Proxied session with combined Session API and data access
  */
 export function createProxiedSession<T extends SessionData>(sessionImpl: SessionImpl<T>): Session<T> & T {
+  /**
+   * Custom inspect function for Node.js console output.
+   * 
+   * Stored as a constant so the same function reference is returned by both the proxy's get trap
+   * and Object.defineProperty, satisfying the proxy invariant for non-configurable properties.
+   */
+  const customInspect = (): T => sessionImpl.toJSON();
+
   const proxy =  new Proxy(sessionImpl, {
     /**
      * Intercepts property reads on the session.
@@ -48,7 +56,7 @@ export function createProxiedSession<T extends SessionData>(sessionImpl: Session
       
       // For Node.js console (if ever used)
       if (prop === Symbol.for('nodejs.util.inspect.custom')) {
-        return () => target.toJSON();
+        return customInspect;
       }
       
       // Private fields with # can't be accessed through Proxy
@@ -124,11 +132,11 @@ export function createProxiedSession<T extends SessionData>(sessionImpl: Session
    * (methods, private fields, etc.). With this custom inspector, it shows only
    * the session data (like { userId: '123', tenantId: 'abc' }).
    * 
-   * Note: Must be defined directly on the proxy object (not via the trap)
+   * NOTE: Must be defined directly on the proxy object (not via the trap)
    * because Node.js checks for this symbol before invoking proxy traps.
    */
   Object.defineProperty(proxy, Symbol.for('nodejs.util.inspect.custom'), {
-    value: () => sessionImpl.toJSON(),
+    value: customInspect,
     enumerable: false,
     writable: false,
     configurable: false

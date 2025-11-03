@@ -1,104 +1,11 @@
 import { PlatformDetector } from './adapters/base';
 import { NodeAdapter } from './adapters/node';
 import { WebStandardAdapter } from './adapters/web-standard';
+import { prepareOptions } from './core/options';
 import { createProxiedSession } from './core/proxy';
 import { SessionImpl } from './core/session';
 import { SessionError, SessionErrorCode } from './error';
-import { NormalizedSessionOptions, Session, SessionData, SessionOptions } from './types';
-
-const DEFAULT_CSRF_COOKIE_NAME = 'CSRF-TOKEN';
-const DEFAULT_CSRF_PROTECTION_ENABLED = false;
-const DEFAULT_MAX_AGE = 3600; // 1 hour
-const DEFAULT_PATH = '/';
-const DEFAULT_SAME_SITE = 'lax';
-const DEFAULT_SECURE = true;
-const DEFAULT_SESSION_COOKIE_NAME = 'session';
-const MAX_SECRETS_ALLOWED = 3;
-const MIN_SECRET_LENGTH = 32;
-
-/**
- * Normalizes session options by filling in defaults for missing values.
- * 
- * Applies default values for all optional configuration parameters and handles
- * the special case of csrfCookieDomain falling back to domain if not specified.
- * 
- * @param options - User-provided session options
- * @returns Fully populated options object with defaults applied
- * 
- * @internal
- */
-function normalizeOptions(options: SessionOptions): NormalizedSessionOptions {
-  const normalized: NormalizedSessionOptions = {
-    cookieName: options.cookieName ?? DEFAULT_SESSION_COOKIE_NAME,
-    secrets: options.secrets,
-    maxAge: options.maxAge ?? DEFAULT_MAX_AGE,
-    path: options.path ?? DEFAULT_PATH,
-    secure: options.secure ?? DEFAULT_SECURE,
-    sameSite: options.sameSite ?? DEFAULT_SAME_SITE,
-    csrfCookieName: options.csrfCookieName ?? DEFAULT_CSRF_COOKIE_NAME,
-    enableCsrfProtection: options.enableCsrfProtection ?? DEFAULT_CSRF_PROTECTION_ENABLED,
-  };
-
-  if (options.domain !== undefined) {
-    normalized.domain = options.domain;
-  }
-
-  // CSRF domain falls back to session domain.
-  // Only set if either csrfCookieDomain or domain is provided.
-  if (options.csrfCookieDomain !== undefined) {
-    normalized.csrfCookieDomain = options.csrfCookieDomain;
-  } else if (options.domain !== undefined) {
-    normalized.csrfCookieDomain = options.domain;
-  }
-  
-  return normalized;
-}
-
-/**
- * Validates session options for security and correctness.
- * 
- * Ensures that:
- * - At least one secret is provided
- * - No more than 3 secrets for key rotation
- * - All secrets are non-empty strings of at least 32 characters
- * - maxAge is positive
- * 
- * @param options - Normalized session options to validate
- * @throws {SessionError} If validation fails
- * 
- * @internal
- */
-function validateOptions(options: NormalizedSessionOptions): void {
-  const secrets = Array.isArray(options.secrets) ? options.secrets : [options.secrets];
-  
-  if (secrets.length === 0) {
-    throw new SessionError(SessionErrorCode.INVALID_CONFIGURATION, 'At least one secret is required');
-  }
-  
-  if (secrets.length > MAX_SECRETS_ALLOWED) {
-    throw new SessionError(
-      SessionErrorCode.INVALID_CONFIGURATION,
-      `Maximum ${MAX_SECRETS_ALLOWED} secrets allowed for rotation`
-    );
-  }
-  
-  for (const secret of secrets) {
-    if (typeof secret !== 'string' || secret.length === 0) {
-      throw new SessionError(SessionErrorCode.INVALID_CONFIGURATION, 'All secrets must be non-empty strings');
-    }
-    
-    if (secret.length < MIN_SECRET_LENGTH) {
-      throw new SessionError(
-        SessionErrorCode.INVALID_CONFIGURATION,
-        `Secrets must be at least ${MIN_SECRET_LENGTH} characters long for security`
-      );
-    }
-  }
-
-  if (options.maxAge <= 0) {
-    throw new SessionError(SessionErrorCode.INVALID_CONFIGURATION, 'maxAge must be greater than 0');
-  }
-}
+import { Session, SessionData, SessionOptions } from './types';
 
 /**
  * Creates the appropriate adapter based on the runtime environment.
@@ -184,9 +91,7 @@ export async function getSession<T extends SessionData = SessionData>(
     options = responseOrOptions as SessionOptions;
   }
   
-  const normalizedOptions = normalizeOptions(options);
-  validateOptions(normalizedOptions);
-  
+  const normalizedOptions = prepareOptions(options);
   const adapter = createAdapter(request, response);
   const cookieValue = adapter.readCookie(normalizedOptions.cookieName);
 
@@ -231,9 +136,7 @@ export function getSessionSync<T extends SessionData = SessionData>(
   response: unknown,
   options: SessionOptions
 ): Session<T> & T {
-  const normalizedOptions = normalizeOptions(options);
-  validateOptions(normalizedOptions);
-  
+  const normalizedOptions = prepareOptions(options);
   const adapter = createAdapter(request, response);
   const cookieValue = adapter.readCookie(normalizedOptions.cookieName);
 

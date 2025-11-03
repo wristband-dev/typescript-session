@@ -1,26 +1,13 @@
-/**
- * Unit tests for CookieParser utility class.
- * 
- * Tests cover:
- * - Cookie header parsing (request cookies)
- * - Set-Cookie header serialization (response cookies)
- * - Cookie deletion
- * - URL encoding/decoding
- * - Edge cases and malformed input
- * - RFC 6265 compliance
- */
-
 import { CookieParser } from '../../src/core/cookie-parser';
 import { CookieOptions } from '../../src/types';
 
 describe('CookieParser', () => {
-  // Base cookie options for testing
   const baseOptions: CookieOptions = {
     path: '/',
     maxAge: 3600,
     secure: true,
     httpOnly: true,
-    sameSite: 'lax'
+    sameSite: 'Lax'
   };
 
   describe('parse', () => {
@@ -124,10 +111,9 @@ describe('CookieParser', () => {
   describe('serialize', () => {
     it('should serialize basic cookie with all options', () => {
       const result = CookieParser.serialize('session', 'abc123', baseOptions);
-      
       expect(result).toContain('session=abc123');
       expect(result).toContain('Path=/');
-      expect(result).toContain('SameSite=lax');
+      expect(result).toContain('SameSite=Lax');
       expect(result).toContain('Max-Age=3600');
       expect(result).toContain('Secure');
       expect(result).toContain('HttpOnly');
@@ -144,11 +130,7 @@ describe('CookieParser', () => {
     });
 
     it('should include domain when provided', () => {
-      const options: CookieOptions = {
-        ...baseOptions,
-        domain: '.example.com'
-      };
-      
+      const options: CookieOptions = { ...baseOptions, domain: '.example.com' };
       const result = CookieParser.serialize('session', 'abc123', options);
       expect(result).toContain('Domain=.example.com');
     });
@@ -164,11 +146,7 @@ describe('CookieParser', () => {
     });
 
     it('should omit Secure flag when secure is false', () => {
-      const options: CookieOptions = {
-        ...baseOptions,
-        secure: false
-      };
-      
+      const options: CookieOptions = { ...baseOptions, secure: false };
       const result = CookieParser.serialize('session', 'abc123', options);
       expect(result).not.toContain('Secure');
     });
@@ -179,51 +157,31 @@ describe('CookieParser', () => {
     });
 
     it('should omit HttpOnly flag when httpOnly is false', () => {
-      const options: CookieOptions = {
-        ...baseOptions,
-        httpOnly: false
-      };
-      
+      const options: CookieOptions = { ...baseOptions, httpOnly: false };
       const result = CookieParser.serialize('session', 'abc123', options);
       expect(result).not.toContain('HttpOnly');
     });
 
     it('should handle different sameSite values', () => {
-      const strictOptions: CookieOptions = {
-        ...baseOptions,
-        sameSite: 'strict'
-      };
-      
+      const strictOptions: CookieOptions = { ...baseOptions, sameSite: 'Strict' };
       const result = CookieParser.serialize('session', 'abc123', strictOptions);
-      expect(result).toContain('SameSite=strict');
+      expect(result).toContain('SameSite=Strict');
     });
 
-    it('should handle sameSite none', () => {
-      const noneOptions: CookieOptions = {
-        ...baseOptions,
-        sameSite: 'none'
-      };
-      
+    it('should handle sameSite None', () => {
+      const noneOptions: CookieOptions = { ...baseOptions, sameSite: 'None' };
       const result = CookieParser.serialize('session', 'abc123', noneOptions);
-      expect(result).toContain('SameSite=none');
+      expect(result).toContain('SameSite=None');
     });
 
     it('should handle different path values', () => {
-      const options: CookieOptions = {
-        ...baseOptions,
-        path: '/api'
-      };
-      
+      const options: CookieOptions = { ...baseOptions, path: '/api' };
       const result = CookieParser.serialize('session', 'abc123', options);
       expect(result).toContain('Path=/api');
     });
 
     it('should handle maxAge of 0 with Expires header', () => {
-      const options: CookieOptions = {
-        ...baseOptions,
-        maxAge: 0
-      };
-      
+      const options: CookieOptions = { ...baseOptions, maxAge: 0 };
       const result = CookieParser.serialize('session', '', options);
       expect(result).toContain('Max-Age=0');
       expect(result).toContain('Expires=Thu, 01 Jan 1970 00:00:00 GMT');
@@ -240,11 +198,7 @@ describe('CookieParser', () => {
     });
 
     it('should handle very large maxAge values', () => {
-      const options: CookieOptions = {
-        ...baseOptions,
-        maxAge: 31536000 // 1 year
-      };
-      
+      const options: CookieOptions = { ...baseOptions, maxAge: 31536000 }; // 1 year
       const result = CookieParser.serialize('session', 'abc123', options);
       expect(result).toContain('Max-Age=31536000');
     });
@@ -274,12 +228,11 @@ describe('CookieParser', () => {
 
     it('should preserve order of cookie attributes', () => {
       const result = CookieParser.serialize('session', 'abc123', baseOptions);
-      
       // Verify the order: name=value; Path; SameSite; Max-Age; [Secure]; [HttpOnly]
       const parts = result.split('; ');
       expect(parts[0]).toBe('session=abc123');
       expect(parts[1]).toBe('Path=/');
-      expect(parts[2]).toBe('SameSite=lax');
+      expect(parts[2]).toBe('SameSite=Lax');
       expect(parts[3]).toBe('Max-Age=3600');
     });
   });
@@ -287,7 +240,6 @@ describe('CookieParser', () => {
   describe('createDestroyCookie', () => {
     it('should create cookie with empty value and maxAge 0', () => {
       const result = CookieParser.createDestroyCookie('session', baseOptions);
-      
       expect(result).toContain('session=');
       expect(result).toContain('Max-Age=0');
       expect(result).toContain('Expires=Thu, 01 Jan 1970 00:00:00 GMT');
@@ -295,19 +247,14 @@ describe('CookieParser', () => {
 
     it('should preserve all other cookie options', () => {
       const result = CookieParser.createDestroyCookie('session', baseOptions);
-      
       expect(result).toContain('Path=/');
-      expect(result).toContain('SameSite=lax');
+      expect(result).toContain('SameSite=Lax');
       expect(result).toContain('Secure');
       expect(result).toContain('HttpOnly');
     });
 
     it('should include domain when provided', () => {
-      const options: CookieOptions = {
-        ...baseOptions,
-        domain: '.example.com'
-      };
-      
+      const options: CookieOptions = { ...baseOptions, domain: '.example.com' };
       const result = CookieParser.createDestroyCookie('session', options);
       expect(result).toContain('Domain=.example.com');
     });
@@ -319,31 +266,19 @@ describe('CookieParser', () => {
     });
 
     it('should handle custom path', () => {
-      const options: CookieOptions = {
-        ...baseOptions,
-        path: '/api'
-      };
-      
+      const options: CookieOptions = { ...baseOptions, path: '/api' };
       const result = CookieParser.createDestroyCookie('session', options);
       expect(result).toContain('Path=/api');
     });
 
     it('should respect httpOnly false', () => {
-      const options: CookieOptions = {
-        ...baseOptions,
-        httpOnly: false
-      };
-      
+      const options: CookieOptions = { ...baseOptions, httpOnly: false };
       const result = CookieParser.createDestroyCookie('csrf-token', options);
       expect(result).not.toContain('HttpOnly');
     });
 
     it('should respect secure false', () => {
-      const options: CookieOptions = {
-        ...baseOptions,
-        secure: false
-      };
-      
+      const options: CookieOptions = { ...baseOptions, secure: false };
       const result = CookieParser.createDestroyCookie('session', options);
       expect(result).not.toContain('Secure');
     });
@@ -352,51 +287,41 @@ describe('CookieParser', () => {
   describe('parse and serialize roundtrip', () => {
     it('should successfully roundtrip simple value', () => {
       const serialized = CookieParser.serialize('session', 'abc123', baseOptions);
-      
       // Extract just the cookie value part (before first semicolon)
       const cookiePart = serialized.split(';')[0];
       const parsed = CookieParser.parse(cookiePart);
-      
       expect(parsed.session).toBe('abc123');
     });
 
     it('should successfully roundtrip URL-encoded values', () => {
       const value = 'user@example.com';
       const serialized = CookieParser.serialize('email', value, baseOptions);
-      
       // Extract just the cookie value part
       const cookiePart = serialized.split(';')[0];
       const parsed = CookieParser.parse(cookiePart);
-      
       expect(parsed.email).toBe(value);
     });
 
     it('should successfully roundtrip special characters', () => {
       const value = 'hello world!@#$%';
       const serialized = CookieParser.serialize('data', value, baseOptions);
-      
       const cookiePart = serialized.split(';')[0];
       const parsed = CookieParser.parse(cookiePart);
-      
       expect(parsed.data).toBe(value);
     });
 
     it('should successfully roundtrip values with equals signs', () => {
       const value = 'key=value';
       const serialized = CookieParser.serialize('data', value, baseOptions);
-      
       const cookiePart = serialized.split(';')[0];
       const parsed = CookieParser.parse(cookiePart);
-      
       expect(parsed.data).toBe(value);
     });
 
     it('should successfully roundtrip empty values', () => {
       const serialized = CookieParser.serialize('empty', '', baseOptions);
-      
       const cookiePart = serialized.split(';')[0];
       const parsed = CookieParser.parse(cookiePart);
-      
       expect(parsed.empty).toBe('');
     });
   });
@@ -405,28 +330,22 @@ describe('CookieParser', () => {
     it('should use semicolon and space as delimiter', () => {
       const result = CookieParser.serialize('session', 'abc123', baseOptions);
       const parts = result.split('; ');
-      
       expect(parts.length).toBeGreaterThan(1);
       expect(result).toMatch(/; /);
     });
 
     it('should format attributes correctly', () => {
       const result = CookieParser.serialize('session', 'abc123', baseOptions);
-      
       // Attributes should be in format "Key=Value" or just "Key"
       expect(result).toMatch(/Path=\//);
       expect(result).toMatch(/Max-Age=\d+/);
-      expect(result).toMatch(/SameSite=(strict|lax|none)/);
+      expect(result).toMatch(/SameSite=(Strict|Lax|None)/);
       expect(result).toContain('Secure');
       expect(result).toContain('HttpOnly');
     });
 
     it('should use correct Expires format for epoch', () => {
-      const options: CookieOptions = {
-        ...baseOptions,
-        maxAge: 0
-      };
-      
+      const options: CookieOptions = { ...baseOptions, maxAge: 0 };
       const result = CookieParser.serialize('session', '', options);
       expect(result).toContain('Expires=Thu, 01 Jan 1970 00:00:00 GMT');
     });
@@ -435,7 +354,6 @@ describe('CookieParser', () => {
       // RFC 6265 requires certain characters to be percent-encoded
       const specialChars = ' ,";<>';
       const result = CookieParser.serialize('test', specialChars, baseOptions);
-      
       expect(result).toContain(encodeURIComponent(specialChars));
     });
   });

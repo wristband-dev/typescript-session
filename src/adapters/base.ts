@@ -25,10 +25,12 @@ export abstract class BaseAdapter implements SessionAdapter {
 }
 
 /**
- * Creates a new adapter instance.
+ * Utility class for detecting the execution platform of a request object.
  * 
- * @param request - Platform-specific request object (Request or IncomingMessage)
- * @param response - Optional platform-specific response object (Response or ServerResponse)
+ * Provides static type guards for distinguishing between Web Standard and Node.js
+ * request types. This enables the SDK to dynamically select the appropriate session
+ * adapter implementation at runtime. This class does not instantiate adapters directly; it is
+ * used internally by the adapter factory to determine which concrete adapter should be created.
  * 
  * @internal
  */
@@ -70,26 +72,6 @@ export class PlatformDetector {
   }
 
   /**
-   * Checks if object is a Web Standard Response.
-   * 
-   * Detects Response objects by checking for headers.set() method,
-   * which is characteristic of the Web Standard Response API.
-   * 
-   * @param obj - Object to check
-   * @returns True if object is a Web Standard Response
-   * 
-   * @internal
-   */
-  static isWebResponse(obj: unknown): obj is Response {
-    if (!this.hasProps(obj, 'headers')) {
-      return false;
-    }
-
-    const headers = obj.headers as Record<string, unknown>;
-    return typeof headers.set === 'function';
-  }
-
-  /**
    * Checks if object is a Node.js IncomingMessage.
    * 
    * Detects IncomingMessage objects by checking for headers, method, and url properties,
@@ -107,24 +89,5 @@ export class PlatformDetector {
 
     const headers = obj.headers as Record<string, unknown>;
     return typeof obj.method === 'string' && typeof obj.url === 'string' && !headers.get;
-  }
-
-  /**
-   * Checks if object is a Node.js ServerResponse.
-   * 
-   * Detects ServerResponse objects by checking for setHeader() and writeHead() methods,
-   * which are characteristic of the Node.js ServerResponse API.
-   * 
-   * @param obj - Object to check
-   * @returns True if object is a Node.js ServerResponse
-   * 
-   * @internal
-   */
-  static isNodeResponse(obj: unknown): obj is ServerResponse {
-    if (!this.hasProps(obj, 'setHeader', 'writeHead')) {
-      return false;
-    }
-
-    return typeof obj.setHeader === 'function' && typeof obj.writeHead === 'function';
   }
 }

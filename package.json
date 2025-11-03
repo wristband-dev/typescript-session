@@ -1,6 +1,6 @@
 {
   "name": "@wristband/typescript-session",
-  "description": "Encrypted cookie-based sessions for TypeScript applications.",
+  "description": "Secure, encrypted cookie-based session management for TypeScript applications.",
   "author": "Wristband",
   "version": "0.1.0",
   "license": "MIT",
@@ -68,20 +68,24 @@
     "typescript": "^5.8.3"
   },
   "keywords": [
-    "wristband",
     "session",
-    "authentication",
-    "cookies",
-    "encryption",
-    "framework-agnostic",
+    "session-management",
+    "cookie-session",
+    "encrypted-cookies",
     "typescript",
+    "authentication",
+    "auth",
+    "csrf-protection",
+    "express",
     "nextjs",
-    "node",
+    "cloudflare-workers",
+    "edge-runtime",
+    "serverless",
     "deno",
     "bun",
-    "cloudflare-workers",
-    "web-standards",
+    "web-crypto",
+    "framework-agnostic",
     "multi-tenant",
-    "b2b"
+    "wristband"
   ]
 }

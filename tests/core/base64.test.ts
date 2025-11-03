@@ -111,14 +111,11 @@ describe('Base64', () => {
     });
 
     it('should decode base64 with all byte values', () => {
-      // First encode all byte values
       const original = new Uint8Array(256);
       for (let i = 0; i < 256; i++) {
         original[i] = i;
       }
       const encoded = Base64.encode(original);
-      
-      // Then decode and verify
       const decoded = Base64.decode(encoded);
       expect(decoded).toEqual(original);
     });
@@ -143,16 +140,13 @@ describe('Base64', () => {
     });
 
     it('should decode large base64 strings', () => {
-      // Create large input, encode it, then decode
       const size = 0x8000 * 2; // 64KB
       const original = new Uint8Array(size);
       for (let i = 0; i < size; i++) {
         original[i] = i % 256;
       }
-      
       const encoded = Base64.encode(original);
       const decoded = Base64.decode(encoded);
-      
       expect(decoded).toEqual(original);
     });
   });
@@ -177,7 +171,6 @@ describe('Base64', () => {
       for (let i = 0; i < original.length; i++) {
         original[i] = Math.floor(Math.random() * 256);
       }
-      
       const encoded = Base64.encode(original);
       const decoded = Base64.decode(encoded);
       expect(decoded).toEqual(original);
@@ -186,7 +179,6 @@ describe('Base64', () => {
     it('should successfully roundtrip data at chunk boundary', () => {
       const original = new Uint8Array(0x8000);
       original.fill(123);
-      
       const encoded = Base64.encode(original);
       const decoded = Base64.decode(encoded);
       expect(decoded).toEqual(original);
@@ -197,7 +189,6 @@ describe('Base64', () => {
       for (let i = 0; i < original.length; i++) {
         original[i] = i % 256;
       }
-      
       const encoded = Base64.encode(original);
       const decoded = Base64.decode(encoded);
       expect(decoded).toEqual(original);
@@ -206,9 +197,8 @@ describe('Base64', () => {
     it('should successfully roundtrip very large data', () => {
       const original = new Uint8Array(0x8000 * 5); // 160KB
       for (let i = 0; i < original.length; i++) {
-        original[i] = (i * 7) % 256; // Pattern
+        original[i] = (i * 7) % 256;
       }
-      
       const encoded = Base64.encode(original);
       const decoded = Base64.decode(encoded);
       expect(decoded).toEqual(original);
@@ -219,7 +209,6 @@ describe('Base64', () => {
       for (let i = 0; i < 256; i++) {
         original[i] = i;
       }
-      
       const encoded = Base64.encode(original);
       const decoded = Base64.decode(encoded);
       expect(decoded).toEqual(original);

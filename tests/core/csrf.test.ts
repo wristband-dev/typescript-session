@@ -42,12 +42,9 @@ describe('createCsrfToken', () => {
     it('should generate unique tokens across multiple calls', () => {
       const tokens = new Set<string>();
       const iterations = 100;
-
       for (let i = 0; i < iterations; i++) {
         tokens.add(createCsrfToken());
       }
-
-      // All tokens should be unique
       expect(tokens.size).toBe(iterations);
     });
 

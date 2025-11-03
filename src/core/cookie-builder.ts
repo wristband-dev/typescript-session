@@ -27,10 +27,10 @@ export class CookieBuilder {
    *   maxAge: 3600,
    *   path: '/',
    *   secure: true,
-   *   sameSite: 'lax',
+   *   sameSite: 'Lax',
    *   domain: '.example.com'
    * });
-   * // Returns: { maxAge: 3600, path: '/', secure: true, httpOnly: true, sameSite: 'lax', domain: '.example.com' }
+   * // Returns: { maxAge: 3600, path: '/', secure: true, httpOnly: true, sameSite: 'Lax', domain: '.example.com' }
    * ```
    */
   static forSession(options: NormalizedSessionOptions): CookieOptions {
@@ -68,10 +68,10 @@ export class CookieBuilder {
    *   maxAge: 3600,
    *   path: '/',
    *   secure: true,
-   *   sameSite: 'lax',
+   *   sameSite: 'Lax',
    *   domain: '.example.com' // value of `csrfCookieDomain`
    * });
-   * // Returns: { maxAge: 3600, path: '/', secure: true, httpOnly: false, sameSite: 'lax', domain: '.example.com' }
+   * // Returns: { maxAge: 3600, path: '/', secure: true, httpOnly: false, sameSite: 'Lax', domain: '.example.com' }
    * ```
    */
   static forCsrf(options: NormalizedSessionOptions): CookieOptions {
@@ -107,10 +107,10 @@ export class CookieBuilder {
    * const cookieOptions = CookieBuilder.forSessionDestroy({
    *   path: '/',
    *   secure: true,
-   *   sameSite: 'lax',
+   *   sameSite: 'Lax',
    *   domain: '.example.com'
    * });
-   * // Returns: { maxAge: 0, path: '/', secure: true, httpOnly: true, sameSite: 'lax', domain: '.example.com' }
+   * // Returns: { maxAge: 0, path: '/', secure: true, httpOnly: true, sameSite: 'Lax', domain: '.example.com' }
    * ```
    */
   static forSessionDestroy(options: NormalizedSessionOptions): CookieOptions {
@@ -146,10 +146,10 @@ export class CookieBuilder {
    * const cookieOptions = CookieBuilder.forCsrfDestroy({
    *   path: '/',
    *   secure: true,
-   *   sameSite: 'lax',
+   *   sameSite: 'Lax',
    *   csrfCookieDomain: '.example.com'
    * });
-   * // Returns: { maxAge: 0, path: '/', secure: true, httpOnly: false, sameSite: 'lax', domain: '.example.com' }
+   * // Returns: { maxAge: 0, path: '/', secure: true, httpOnly: false, sameSite: 'Lax', domain: '.example.com' }
    * ```
    */
   static forCsrfDestroy(options: NormalizedSessionOptions): CookieOptions {

@@ -14,8 +14,7 @@
  * This level of entropy (256 bits) makes the token computationally infeasible
  * to guess or brute force.
  * 
- * Note: If globalThis.crypto is unavailable, this will throw a TypeError. Crypto availability
- * is validated upstream during session operations.
+ * NOTE: Availability of globalThis.crypto is validated upstream during session operations.
  * @see {SessionCrypto}
  * 
  * @returns A 64-character hexadecimal CSRF token

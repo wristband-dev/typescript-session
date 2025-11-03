@@ -1,13 +1,12 @@
 /**
- * Represents the `SameSite` attribute for cookies, which controls 
- * whether cookies are sent along with cross-site requests.
+ * Represents the `SameSite` attribute for cookies, which controls if cookies are sent along with cross-site requests.
  *
- * - `'strict'`: Cookies are only sent for same-site requests.
- * - `'lax'`: Cookies are sent for top-level navigations and same-site requests (default in most browsers).
- * - `'none'`: Cookies are sent in all contexts, including cross-site requests.
+ * - `'Strict'`: Cookies are only sent for same-site requests.
+ * - `'Lax'`: Cookies are sent for top-level navigations and same-site requests (default in most browsers).
+ * - `'None'`: Cookies are sent in all contexts, including cross-site requests.
  *             Must be used with `Secure` in modern browsers.
  */
-export type SameSiteOption = 'strict' | 'lax' | 'none';
+export type SameSiteOption = 'Strict' | 'Lax' | 'None';
 
 /**
  * Configuration options for session management.
@@ -17,7 +16,7 @@ export type SameSiteOption = 'strict' | 'lax' | 'none';
  */
 export interface SessionOptions {
   /** 
-   * Session cookie name. 
+   * Session cookie name.
    * 
    * @default 'session'
    */
@@ -85,13 +84,15 @@ export interface SessionOptions {
   /**
    * Cookie SameSite setting. Controls whether cookies are sent on cross-site requests.
    * 
-   * - 'strict': Cookies only sent for same-site requests (best CSRF protection, default)
-   * - 'lax': Cookies sent for same-site + top-level navigation GET requests
-   * - 'none': Cookies sent for all requests (requires secure: true, needs CSRF protection)
+   * - 'Strict': Cookies only sent for same-site requests (best CSRF protection, default)
+   * - 'Lax': Cookies sent for same-site + top-level navigation GET requests
+   * - 'None': Cookies sent for all requests (requires secure: true, needs CSRF protection)
    * 
-   * @default 'lax'
+   * Accepts either lowercase or capitalized values for convenience; output is normalized to title case.
+   * 
+   * @default 'Lax'
    */
-  sameSite?: SameSiteOption;
+  sameSite?: SameSiteOption  | 'lax' | 'strict' | 'none';
   /** 
    * Name of the CSRF cookie (only used if enableCsrfProtection is true).
    * 
@@ -108,8 +109,8 @@ export interface SessionOptions {
    * Enable CSRF protection by generating and validating CSRF tokens.
    * 
    * **Recommendation:**
-   * Only enable CSRF protection if you use sameSite: 'none' or want defense-in-depth.
-   * Otherwise, rely on the default sameSite: 'strict' or 'lax' setting for CSRF protection,
+   * Only enable CSRF protection if you use sameSite: 'None' or want defense-in-depth.
+   * Otherwise, rely on the default sameSite: 'Strict' or 'Lax' setting for CSRF protection,
    * as those are sufficient in most cases.
    * 
    * When enabled:
@@ -122,7 +123,7 @@ export interface SessionOptions {
    * - No CSRF tokens are generated
    * - No CSRF cookies are set or deleted
    * 
-   * @default false (sameSite: 'strict' or 'lax' provides sufficient CSRF protection)
+   * @default false
    */
   enableCsrfProtection?: boolean;
 }
@@ -256,22 +257,19 @@ export interface CookieOptions {
    */
   httpOnly: boolean;
   /**
-   * Cookie SameSite attribute.
+   * Cookie SameSite attribute that controls whether cookies are sent on cross-site requests.
    * 
-   * Controls whether cookies are sent on cross-site requests,
-   * providing CSRF attack protection.
+   * - `'Strict'`: Cookies only sent for same-site requests (strongest protection)
+   * - `'Lax'`: Cookies sent for same-site + top-level navigation (default in modern browsers)
+   * - `'None'`: Cookies sent for all requests (requires `secure: true`)
    * 
-   * - `'strict'`: Cookies only sent for same-site requests (strongest protection)
-   * - `'lax'`: Cookies sent for same-site + top-level navigation (default in modern browsers)
-   * - `'none'`: Cookies sent for all requests (requires `secure: true`)
-   * 
-   * @default 'lax'
+   * @default 'Lax'
    * 
    * @example
    * ```typescript
-   * sameSite: 'strict'  // Best for auth cookies on same domain
-   * sameSite: 'lax'     // Good balance for most use cases
-   * sameSite: 'none'    // Required for cross-site iframes (must use secure: true)
+   * sameSite: 'Strict'  // Best for auth cookies on same domain
+   * sameSite: 'Lax'     // Good balance for most use cases
+   * sameSite: 'None'    // Required for cross-site iframes (must use secure: true)
    * ```
    */
   sameSite: SameSiteOption;
@@ -764,7 +762,7 @@ export interface NormalizedSessionOptions {
   path: string;
   /** Cookie secure flag (defaults to true) */
   secure: boolean;
-  /** Cookie sameSite setting (defaults to 'lax') */
+  /** Cookie sameSite setting (defaults to 'Lax') */
   sameSite: SameSiteOption;
   /** CSRF cookie name (defaults to 'CSRF-TOKEN') */
   csrfCookieName: string;
@@ -774,8 +772,8 @@ export interface NormalizedSessionOptions {
    * Enable CSRF protection by generating and validating CSRF tokens.
    * 
    * **Recommendation:**
-   * Only enable CSRF protection if you use sameSite: 'none' or want defense-in-depth.
-   * Otherwise, rely on the default sameSite: 'strict' or 'lax' setting for CSRF protection,
+   * Only enable CSRF protection if you use sameSite: 'None' or want defense-in-depth.
+   * Otherwise, rely on the default sameSite: 'Strict' or 'Lax' setting for CSRF protection,
    * as those are sufficient in most cases.
    * 
    * When enabled:
@@ -788,7 +786,7 @@ export interface NormalizedSessionOptions {
    * - No CSRF tokens are generated
    * - No CSRF cookies are set or deleted
    * 
-   * @default false (sameSite: 'strict' or 'lax' provides sufficient CSRF protection)
+   * @default false (sameSite: 'Strict' or 'Lax' provides sufficient CSRF protection)
    */
   enableCsrfProtection: boolean;
 }

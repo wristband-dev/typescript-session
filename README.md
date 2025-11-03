@@ -23,7 +23,7 @@
 
 # Wristband TypeScript Session SDK
 
-Secure, encrypted cookie-based session management for TypeScript applications. Works standalone or integrates seamlessly with Wristband authentication.
+Secure, encrypted cookie-based session management for TypeScript applications.
 
 <br>
 
@@ -39,15 +39,17 @@ This SDK provides enterprise-grade session management with:
 - **⚡ High Performance** - Deferred mode prevents redundant encryption in Node.js
 - **🛡️ CSRF Protection** - Optional token-based CSRF protection
 
-**Use it standalone** for any TypeScript application, or **use with [Wristband](https://wristband.dev)** for integrated multi-tenant authentication with helper methods for common auth workflows.
+**Use it standalone** for any TypeScript application, or **pair with [Wristband](https://wristband.dev)** for a complete multi-tenant authentication solution.
 
 <br>
 
 ## Cookie-Based Sessions Explained
 
-This SDK uses **encrypted cookie-based sessions** - a lightweight approach where session data is stored in the browser as an encrypted cookie rather than on the server.
+This SDK uses encrypted cookie-based sessions - a lightweight approach where session data is stored in the browser as an encrypted cookie rather than on the server.
 
 ### How It Works
+
+This SDK uses **encryption** (AES-256-GCM) rather than just **signing** (like signed JWTs) to keep your session data completely private.
 
 1. **Server encrypts** session data using AES-256-GCM
 2. **Browser stores** the encrypted cookie (max 4KB)
@@ -761,9 +763,9 @@ These SDK configuration options control how sessions are created, encrypted, and
 | `maxAge` | `number` | No | `3600` (1 hour) | Session expiration time in seconds. Determines how long a session remains valid. After this time, the session cookie expires and users must re-authenticate. Example: `86400` for 24 hours, `604800` for 7 days. |
 | `path` | `string` | No | `'/'` | Cookie path attribute. Specifies which URL paths can access the cookie. Default `'/'` means all paths. |
 | `secure` | `boolean` | No | `true` | Cookie Secure flag. If `true`, cookie is only sent over HTTPS connections. <br><br>**Security recommendation:** Always use `true` in production. Only set to `false` for local development over HTTP. |
-| `sameSite` | `'strict'`, `'lax'`, or `'none'` | No | `'lax'` | Cookie SameSite setting. Controls whether cookies are sent on cross-site requests. <br><br>**`'strict'`:** Cookies only sent for same-site requests (recommended, when possible). <br><br>**`'lax'`:** Cookies sent for same-site requests plus top-level navigation GET requests (good balance). <br><br>**`'none'`:** Cookies sent for all requests (requires `secure: true`; use with CSRF token protection enabled; use only if you know what you are doing). |
+| `sameSite` | `'Strict'`, `'Lax'`, or `'None'` | No | `'Lax'` | Cookie SameSite setting. Controls whether cookies are sent on cross-site requests. <br><br>**`'Strict'`:** Cookies only sent for same-site requests (recommended, when possible). <br><br>**`'Lax'`:** Cookies sent for same-site requests plus top-level navigation GET requests (good balance). <br><br>**`'None'`:** Cookies sent for all requests (requires `secure: true`; use with CSRF token protection enabled; use only if you know what you are doing). |
 | `domain` | `string` | No | `undefined` | Cookie domain attribute. Controls which domains can access the cookie. <br><br>**`undefined`:** Cookie only sent to current domain. <br><br>**`'.example.com'`:** Cookie sent to example.com and all subdomains. <br><br>**`'app.example.com'`:** Cookie only sent to app.example.com. |
-| `enableCsrfProtection` | `boolean` | No | `false` | Enable CSRF protection by generating and validating CSRF tokens. <br><br>**Recommendation:** Only enable if you use `sameSite: 'none'` or want defense-in-depth. The default `sameSite: 'lax'` (or `'strict'`) provides sufficient CSRF protection for most cases. <br><br>**When enabled:** CSRF token is automatically generated after authentication (via any `save()` function), stored in both session and a separate cookie, and must be included in request headers for server validation. <br><br>**When disabled:** No CSRF tokens or cookies are generated. |
+| `enableCsrfProtection` | `boolean` | No | `false` | Enable CSRF protection by generating and validating CSRF tokens. <br><br>**Recommendation:** Only enable if you use `sameSite: 'None'` or want defense-in-depth. The default `sameSite: 'Lax'` (or `'Strict'`) provides sufficient CSRF protection for most cases. <br><br>**When enabled:** CSRF token is automatically generated after authentication (via any `save()` function), stored in both session and a separate cookie, and must be included in request headers for server validation. <br><br>**When disabled:** No CSRF tokens or cookies are generated. |
 | `csrfCookieName` | `string` | No | `'CSRF-TOKEN'` | Name of the CSRF cookie. Only used if `enableCsrfProtection` is `true`. |
 | `csrfCookieDomain` | `string` | No | `undefined` | Domain for CSRF cookie. Follows same rules as `domain` option. Falls back to `domain` value if not specified. Only used if `enableCsrfProtection` is `true`. |
 
@@ -1083,7 +1085,7 @@ A Promise that resolves to an array of cookie objects, where each object contain
   - path (string): Cookie path attribute (default: '/')
   - secure (boolean): Requires HTTPS when true (default: true)
   - httpOnly (boolean): Prevents JavaScript access when true (default: true)
-  - sameSite ('strict' | 'lax' | 'none'): Controls cross-site request behavior (default: 'lax')
+  - sameSite ('Strict' | 'Lax' | 'None'): Controls cross-site request behavior (default: 'Lax')
 
 The returned array will contain:
 
@@ -1473,15 +1475,37 @@ app.get('/dashboard', (req, res) => {
 
 This SDK includes optional CSRF token protection for defense-in-depth security against cross-site request forgery attacks.
 
-**Default behavior:**
+**How it works:**
 
-CSRF protection is **disabled by default** (`enableCsrfProtection: false`). The SDK relies on `sameSite: 'lax'` (or `'strict'`) cookies for CSRF protection, which is sufficient for most applications.
+When enabled, this SDK implements the [Synchronizer Token Pattern](https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html#synchronizer-token-pattern), a widely-used CSRF defense recommended by OWASP. It works by the following:
+
+1. **Token generation:** CSRF tokens are generated when calling `save()`, `saveToResponse()`, or `getCookieDataForSave()`
+2. **Dual storage:** Tokens are stored in two places:
+  - The session data (encrypted, in the `csrfToken` field)
+  - A separate cookie (unencrypted, so frontend JavaScript can read it; e.g.: `CSRF-TOKEN`)
+3. **Client includes token:** The frontend reads the token from the cookie and includes it in request headers (e.g., `X-CSRF-TOKEN`)
+4. **Server validates:** The backend validates that the header token matches the session token
+5. **Automatic cleanup:** When you destroy a session using `destroy()`, `destroyToResponse()`, or `getCookieDataForDestroy()`, both the session cookie and CSRF cookie are automatically deleted
+
+This ensures that even if an attacker can trick a user's browser into making a request, they cannot read the token from the cookie (due to browser same-origin policy) and therefore cannot include it in the attack request.
+
+For more details on CSRF prevention best practices, see the [OWASP CSRF Prevention Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html).
+
+> **⚠️ Implementation Required**
+>
+> This SDK handles token generation, storage, and cookie management. However, **you must implement**:
+> - **Frontend:** Reading the CSRF cookie and including it in request headers
+> - **Backend:** Validating the header token matches the session token
+>
+> See the "Example usage" section below for implementation patterns.
+
+CSRF token protection is **disabled by default** (`enableCsrfProtection: false`). The SDK relies on `sameSite: 'Lax'` (or `'Strict'`) cookies for CSRF protection, which is sufficient for most applications.
 
 **When to enable:**
 
 You should enable CSRF tokens if:
 - You need defense-in-depth for sensitive operations
-- You're using `sameSite: 'none'` (e.g., embedded iframes)
+- You're using `sameSite: 'None'` (e.g., embedded iframes)
 - Your application requires additional CSRF guarantees beyond SameSite cookies
 
 **Basic configuration:**
@@ -1505,16 +1529,6 @@ const session = await getSession(req, res, {
   csrfCookieDomain: '.example.com', // Default: same as session cookie domain
 });
 ```
-
-**How it works:**
-
-When enabled, CSRF tokens are generated when calling any `save()` function and stored in two places:
-
-1. The session data (encrypted, in the `csrfToken` field)
-2. A separate cookie (unencrypted, so frontend JavaScript can read it)
-
-The frontend should read the token from the cookie and include it in request headers (e.g., `X-CSRF-TOKEN: my-csrf-token`). The backend should validate that the header matches the session token.
-
 **Example usage:**
 
 The CSRF token is auto-generated when saving the session in the backend:
@@ -1739,9 +1753,9 @@ await session.save();
 
 1. **Secret Length:** Use secrets that are at least 32 characters long to ensure 256 bits of entropy
 2. **HTTPS Only:** Always set `secure: true` in production to ensure cookies are only sent over HTTPS
-3. **SameSite Cookies:** Use `sameSite: 'lax'` (default) or `'strict'` to prevent cross-site requests. Enable token-based CSRF protection via `enableCsrfProtection: true` for additional security.
+3. **SameSite Cookies:** Use `sameSite: 'Lax'` (default) or `'Strict'` to prevent cross-site requests. Enable token-based CSRF protection via `enableCsrfProtection: true` for additional security.
 4. **Short Sessions:** Set an appropriate `maxAge` based on your application's security requirements (e.g., 1 hour)
-5. **Secret Rotation:** Rotate your secrets regularly for enhanced security (e.g., every 3-6 months)
+5. **Secret Rotation:** Rotate your secrets regularly for enhanced security (e.g., every 6 months)
 
 **Threat Model**
 
@@ -1848,7 +1862,7 @@ app.get('/api/v1/session', async (req, res) => {
 
 ### Token Endpoint
 
-The `getTokenResponse()` method returns the access token and expiration time in the expected by Wristband frontend SDKs for your Token Endpoint:
+The `getTokenResponse()` method returns the access token and expiration time in the format expected by Wristband frontend SDKs for your Token Endpoint:
 
 ```typescript
 app.get('/api/v1/token', async (req, res) => {
