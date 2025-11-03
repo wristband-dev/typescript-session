@@ -42,7 +42,7 @@ jobs:
       - name: Set up Deno
         uses: denoland/setup-deno@v1
         with:
-          deno-version: v1.x
+          deno-version: v2.x
       - name: Build with Node.js
         run: |
           npm ci
@@ -71,8 +71,19 @@ jobs:
               throw new Error('getSession returned null/undefined');
             }
             
+            // Test session operations
+            session.userId = '123';
+            
+            const mockResponse = new Response('OK');
+            const responseWithSession = await session.saveToResponse(mockResponse);
+            
+            const setCookieHeader = responseWithSession.headers.get('set-cookie');
+            if (!setCookieHeader || !setCookieHeader.includes('session=')) {
+              throw new Error('Session cookie not set in response');
+            }
+            
             console.log('✅ Wristband Session SDK works successfully in Deno');
-            console.log(`   Session isNew: ${session.isNew}`);
+            console.log(`   Session saved with userId: ${session.userId}`);
           } catch (error) {
             console.error('❌ SDK test failed:', error);
             Deno.exit(1);
