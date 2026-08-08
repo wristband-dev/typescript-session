@@ -4,31 +4,31 @@ import { SessionImpl } from './session';
 
 /**
  * Create a proxied session that allows direct property access.
- * 
+ *
  * Enables both session methods (save, destroy, etc.) and direct data access:
  * - session.save() → Session method
  * - session.userId → Proxied to session.get('userId')
  * - session.customField = value → Proxied to session.set('customField', value)
- * 
+ *
  * @param sessionImpl - The underlying SessionImpl instance
  * @returns Proxied session with combined Session API and data access
  */
 export function createProxiedSession<T extends SessionData>(sessionImpl: SessionImpl<T>): Session<T> & T {
   /**
    * Custom inspect function for Node.js console output.
-   * 
+   *
    * Stored as a constant so the same function reference is returned by both the proxy's get trap
    * and Object.defineProperty, satisfying the proxy invariant for non-configurable properties.
    */
   const customInspect = (): T => sessionImpl.toJSON();
 
-  const proxy =  new Proxy(sessionImpl, {
+  const proxy = new Proxy(sessionImpl, {
     /**
      * Intercepts property reads on the session.
-     * 
+     *
      * Prioritizes Session methods/properties over session data.
      * Falls back to session.get() for data access.
-     * 
+     *
      * @param target - The SessionImpl instance
      * @param prop - Property being accessed
      * @returns The property value (method, Session property, or session data)
@@ -43,7 +43,7 @@ export function createProxiedSession<T extends SessionData>(sessionImpl: Session
       if (prop === 'constructor') {
         return Object;
       }
-      
+
       // For Object.prototype.toString()
       if (prop === Symbol.toStringTag) {
         return 'Object';
@@ -53,17 +53,17 @@ export function createProxiedSession<T extends SessionData>(sessionImpl: Session
       if (prop === 'toString') {
         return () => target.toString();
       }
-      
+
       // For Node.js console (if ever used)
       if (prop === Symbol.for('nodejs.util.inspect.custom')) {
         return customInspect;
       }
-      
+
       // Private fields with # can't be accessed through Proxy
       if (typeof prop === 'string' && prop.startsWith('#')) {
         return undefined;
       }
-      
+
       // Return actual Session methods/properties
       if (prop in target || typeof prop === 'symbol') {
         const value = target[prop as keyof SessionImpl<T>];
@@ -72,17 +72,17 @@ export function createProxiedSession<T extends SessionData>(sessionImpl: Session
         }
         return value;
       }
-      
+
       // Otherwise get from session data
       return target.get(prop as keyof T);
     },
 
     /**
      * Intercepts property writes on the session.
-     * 
+     *
      * Prevents overwriting Session methods/properties.
      * Delegates data writes to session.set().
-     * 
+     *
      * @param target - The SessionImpl instance
      * @param prop - Property being set
      * @param value - Value to set
@@ -97,7 +97,7 @@ export function createProxiedSession<T extends SessionData>(sessionImpl: Session
           `Cannot override session property: ${String(prop)}`
         );
       }
-      
+
       // Set in session data
       target.set(prop as keyof T, value as T[keyof T]);
       return true;
@@ -105,10 +105,10 @@ export function createProxiedSession<T extends SessionData>(sessionImpl: Session
 
     /**
      * Intercepts property deletion on the session.
-     * 
+     *
      * Delegates to session.delete() for data properties.
      * Prevents deletion of symbols.
-     * 
+     *
      * @param target - The SessionImpl instance
      * @param prop - Property being deleted
      * @returns true if successful
@@ -119,19 +119,19 @@ export function createProxiedSession<T extends SessionData>(sessionImpl: Session
       }
       target.delete(prop as keyof T);
       return true;
-    }
+    },
   }) as unknown as Session<T> & T;
 
   /**
    * Custom inspection for Node.js console.log() and util.inspect().
-   * 
+   *
    * When you log a proxied session in Node.js (e.g., console.log(session)),
    * Node.js calls this custom inspector to determine what to display.
-   * 
+   *
    * Without this, the proxy would show the entire SessionImpl class structure
    * (methods, private fields, etc.). With this custom inspector, it shows only
    * the session data (like { userId: '123', tenantId: 'abc' }).
-   * 
+   *
    * NOTE: Must be defined directly on the proxy object (not via the trap)
    * because Node.js checks for this symbol before invoking proxy traps.
    */
@@ -139,7 +139,7 @@ export function createProxiedSession<T extends SessionData>(sessionImpl: Session
     value: customInspect,
     enumerable: false,
     writable: false,
-    configurable: false
+    configurable: false,
   });
 
   return proxy;

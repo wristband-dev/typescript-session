@@ -1,10 +1,11 @@
 {
   "root": true,
   "parser": "@typescript-eslint/parser",
-  "plugins": ["@typescript-eslint"],
+  "plugins": ["@typescript-eslint", "prettier"],
   "extends": [
     "eslint:recommended",
-    "plugin:@typescript-eslint/recommended"
+    "plugin:@typescript-eslint/recommended",
+    "plugin:prettier/recommended"
   ],
   "parserOptions": {
     "ecmaVersion": 2020,
@@ -19,37 +20,19 @@
     "@typescript-eslint/no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
     "@typescript-eslint/explicit-function-return-type": "warn",
     "@typescript-eslint/no-explicit-any": "warn",
-    
     "prefer-const": "error",
     "no-var": "error",
     "no-console": "warn",
     "eqeqeq": ["error", "always"],
     "curly": ["error", "all"],
-    
     "no-eval": "error",
     "no-implied-eval": "error",
     "no-new-func": "error",
     "no-script-url": "error",
-    
-    "semi": ["error", "always"],
-    "quotes": ["error", "single", { "avoidEscape": true }],
-    "comma-dangle": ["error", "only-multiline"],
-    "object-curly-spacing": ["error", "always"],
-    "array-bracket-spacing": ["error", "never"],
-    
     "no-duplicate-imports": "error",
     "sort-imports": ["error", { 
       "ignoreCase": true, 
       "ignoreDeclarationSort": true 
-    }],
-    "max-len": ["error", { 
-      "code": 120,
-      "tabWidth": 2,
-      "ignoreUrls": true,
-      "ignoreStrings": true,
-      "ignoreTemplateLiterals": true,
-      "ignoreRegExpLiterals": true,
-      "ignoreComments": false
     }]
   },
   "overrides": [

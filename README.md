@@ -1909,9 +1909,9 @@ const userResponse = await fetch('https://your-app.wristband.dev/api/v1/users/me
 
 This session SDK is embedded in the following Wristband authentication SDKs, providing both authentication and session management in a single dependency:
 
-- **[@wristband/express-auth](https://github.com/wristband-dev/express-auth)** - Coming soon!
-- **[@wristband/nextjs-auth](https://github.com/wristband-dev/nextjs-auth)** - Coming soon!
-- **[@wristband/nestjs-auth](https://github.com/wristband-dev/nestjs-auth)** - Coming soon!
+- **[@wristband/express-auth](https://github.com/wristband-dev/express-auth)**
+- **[@wristband/nextjs-auth](https://github.com/wristband-dev/nextjs-auth)**
+- **[@wristband/nestjs-auth](https://github.com/wristband-dev/nestjs-auth)**
 
 If you're using Wristband for authentication, we recommend using one of these framework-specific SDKs instead of installing the session SDK separately. They provide a complete, integrated solution for both authentication and session management.
 

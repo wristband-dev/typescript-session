@@ -25,7 +25,7 @@ describe('SessionCrypto - Sync Methods', () => {
         userId: '123',
         tenantId: 'tenant-456',
         accessToken: 'token-abc',
-        isAuthenticated: true
+        isAuthenticated: true,
       };
       const encrypted = SessionCrypto.encryptSync(sessionData, validSecret);
       expect(encrypted).toBeDefined();
@@ -51,7 +51,7 @@ describe('SessionCrypto - Sync Methods', () => {
       const sessionData = {
         userId: 'user-123',
         tenantId: 'tenant-456',
-        tenantName: 'Test User'
+        tenantName: 'Test User',
       };
       const encrypted = SessionCrypto.encryptSync(sessionData, validSecret);
       expect(encrypted).toBeDefined();
@@ -60,7 +60,7 @@ describe('SessionCrypto - Sync Methods', () => {
     it('should handle number values', () => {
       const sessionData = {
         userId: '123',
-        expiresAt: 1234567890
+        expiresAt: 1234567890,
       };
       const encrypted = SessionCrypto.encryptSync(sessionData, validSecret);
       expect(encrypted).toBeDefined();
@@ -68,7 +68,7 @@ describe('SessionCrypto - Sync Methods', () => {
 
     it('should handle boolean values', () => {
       const sessionData = {
-        isAuthenticated: true
+        isAuthenticated: true,
       };
       const encrypted = SessionCrypto.encryptSync(sessionData, validSecret);
       expect(encrypted).toBeDefined();
@@ -79,8 +79,8 @@ describe('SessionCrypto - Sync Methods', () => {
         userId: '123',
         metadata: {
           theme: 'dark',
-          language: 'en'
-        }
+          language: 'en',
+        },
       };
       const encrypted = SessionCrypto.encryptSync(sessionData, validSecret);
       expect(encrypted).toBeDefined();
@@ -89,7 +89,7 @@ describe('SessionCrypto - Sync Methods', () => {
     it('should handle arrays', () => {
       const sessionData: any = {
         userId: '123',
-        roles: ['admin', 'editor', 'viewer']
+        roles: ['admin', 'editor', 'viewer'],
       };
       const encrypted = SessionCrypto.encryptSync(sessionData, validSecret);
       expect(encrypted).toBeDefined();
@@ -98,7 +98,7 @@ describe('SessionCrypto - Sync Methods', () => {
     it('should handle special characters', () => {
       const sessionData = {
         userId: '123',
-        tenantName: 'Test with special chars: !@#$%^&*()_+-={}[]|\\:";\'<>?,./'
+        tenantName: 'Test with special chars: !@#$%^&*()_+-={}[]|\\:";\'<>?,./',
       };
       const encrypted = SessionCrypto.encryptSync(sessionData, validSecret);
       expect(encrypted).toBeDefined();
@@ -107,7 +107,7 @@ describe('SessionCrypto - Sync Methods', () => {
     it('should handle unicode characters', () => {
       const sessionData = {
         userId: '123',
-        tenantName: '日本語 中文 한글 العربية 🎉'
+        tenantName: '日本語 中文 한글 العربية 🎉',
       };
       const encrypted = SessionCrypto.encryptSync(sessionData, validSecret);
       expect(encrypted).toBeDefined();
@@ -122,10 +122,10 @@ describe('SessionCrypto - Sync Methods', () => {
     it('should throw SESSION_TOO_LARGE for very large session data', () => {
       const largeData: any = {
         userId: '123',
-        largeField: 'x'.repeat(5000)
+        largeField: 'x'.repeat(5000),
       };
       expect(() => SessionCrypto.encryptSync(largeData, validSecret)).toThrow(SessionCryptoError);
-      
+
       try {
         SessionCrypto.encryptSync(largeData, validSecret);
       } catch (error) {
@@ -136,7 +136,7 @@ describe('SessionCrypto - Sync Methods', () => {
     it('should accept moderately large session data under 4KB', () => {
       const moderateData: any = {
         userId: '123',
-        data: 'x'.repeat(2000)
+        data: 'x'.repeat(2000),
       };
       const encrypted = SessionCrypto.encryptSync(moderateData, validSecret);
       expect(encrypted).toBeDefined();
@@ -146,7 +146,7 @@ describe('SessionCrypto - Sync Methods', () => {
     it('should throw ENCRYPTION_FAILED for non-JSON-serializable data (BigInt)', () => {
       const dataWithBigInt: any = {
         userId: '123',
-        bigNumber: BigInt(12345)
+        bigNumber: BigInt(12345),
       };
 
       expect(() => {
@@ -175,7 +175,7 @@ describe('SessionCrypto - Sync Methods', () => {
         userId: '123',
         tenantId: 'tenant-456',
         accessToken: 'token-abc',
-        isAuthenticated: true
+        isAuthenticated: true,
       };
       const encrypted = SessionCrypto.encryptSync(original, validSecret);
       const decrypted = SessionCrypto.decryptSync(encrypted, validSecret, 3600);
@@ -200,7 +200,7 @@ describe('SessionCrypto - Sync Methods', () => {
       // Tamper with the encrypted data
       const tampered = encrypted.substring(0, 20) + 'X' + encrypted.substring(21);
       expect(() => SessionCrypto.decryptSync(tampered, validSecret, 3600)).toThrow(SessionCryptoError);
-      
+
       try {
         SessionCrypto.decryptSync(tampered, validSecret, 3600);
       } catch (error) {
@@ -253,7 +253,7 @@ describe('SessionCrypto - Sync Methods', () => {
       try {
         const original = { userId: '123' };
         const encrypted = SessionCrypto.encryptSync(original, validSecret);
-        
+
         // Wait 100ms with maxAge of 50ms (0.05 seconds)
         const start = Date.now();
         while (Date.now() - start < 100) {
@@ -300,7 +300,7 @@ describe('SessionCrypto - Sync Methods', () => {
 
       // Decode, corrupt the encrypted data portion, re-encode
       const bytes = Buffer.from(encrypted, 'base64');
-      bytes[25] = bytes[25] ^ 0xFF; // Corrupt encrypted data
+      bytes[25] = bytes[25] ^ 0xff; // Corrupt encrypted data
       const corrupted = bytes.toString('base64');
 
       expect(() => {
@@ -330,14 +330,14 @@ describe('SessionCrypto - Sync Methods', () => {
         metadata: {
           preferences: {
             theme: 'dark',
-            notifications: true
+            notifications: true,
           },
-          tags: ['admin', 'premium']
+          tags: ['admin', 'premium'],
         },
         loginHistory: [
           { timestamp: 1234567890, ip: '192.168.1.1' },
-          { timestamp: 1234567900, ip: '192.168.1.2' }
-        ]
+          { timestamp: 1234567900, ip: '192.168.1.2' },
+        ],
       };
       const encrypted = SessionCrypto.encryptSync(original, validSecret);
       const decrypted = SessionCrypto.decryptSync(encrypted, validSecret, 3600);
@@ -351,7 +351,7 @@ describe('SessionCrypto - Sync Methods', () => {
         booleanField: true,
         nullField: null,
         arrayField: [1, 2, 3],
-        objectField: { nested: 'value' }
+        objectField: { nested: 'value' },
       };
       const encrypted = SessionCrypto.encryptSync(original, validSecret);
       const decrypted: any = SessionCrypto.decryptSync(encrypted, validSecret, 3600);
@@ -367,7 +367,7 @@ describe('SessionCrypto - Sync Methods', () => {
     it('should preserve unicode characters', () => {
       const original = {
         userId: '123',
-        tenantName: '日本語 中文 한글 العربية 🎉🚀'
+        tenantName: '日本語 中文 한글 العربية 🎉🚀',
       };
       const encrypted = SessionCrypto.encryptSync(original, validSecret);
       const decrypted = SessionCrypto.decryptSync(encrypted, validSecret, 3600);
@@ -378,7 +378,7 @@ describe('SessionCrypto - Sync Methods', () => {
     it('should preserve special characters', () => {
       const original = {
         userId: '123',
-        tenantName: '!@#$%^&*()_+-={}[]|\\:";\'<>?,./'
+        tenantName: '!@#$%^&*()_+-={}[]|\\:";\'<>?,./',
       };
       const encrypted = SessionCrypto.encryptSync(original, validSecret);
       const decrypted = SessionCrypto.decryptSync(encrypted, validSecret, 3600);
@@ -390,22 +390,14 @@ describe('SessionCrypto - Sync Methods', () => {
     it('should decrypt with first secret', () => {
       const original = { userId: '123' };
       const encrypted = SessionCrypto.encryptSync(original, validSecret);
-      const decrypted = SessionCrypto.decryptWithSecretsSync(
-        encrypted,
-        [validSecret, alternateSecret],
-        3600
-      );
+      const decrypted = SessionCrypto.decryptWithSecretsSync(encrypted, [validSecret, alternateSecret], 3600);
       expect(decrypted).toEqual(original);
     });
 
     it('should decrypt with second secret when first fails', () => {
       const original = { userId: '123' };
       const encrypted = SessionCrypto.encryptSync(original, validSecret);
-      const decrypted = SessionCrypto.decryptWithSecretsSync(
-        encrypted,
-        [alternateSecret, validSecret],
-        3600
-      );
+      const decrypted = SessionCrypto.decryptWithSecretsSync(encrypted, [alternateSecret, validSecret], 3600);
       expect(decrypted).toEqual(original);
     });
 
@@ -426,20 +418,12 @@ describe('SessionCrypto - Sync Methods', () => {
       const original = { userId: '123' };
       const encrypted = SessionCrypto.encryptSync(original, wrongSecret);
 
-      expect(() => 
-        SessionCrypto.decryptWithSecretsSync(
-          encrypted,
-          [validSecret, alternateSecret],
-          3600
-        )
-      ).toThrow(SessionCryptoError);
+      expect(() => SessionCrypto.decryptWithSecretsSync(encrypted, [validSecret, alternateSecret], 3600)).toThrow(
+        SessionCryptoError
+      );
 
       try {
-        SessionCrypto.decryptWithSecretsSync(
-          encrypted,
-          [validSecret, alternateSecret],
-          3600
-        );
+        SessionCrypto.decryptWithSecretsSync(encrypted, [validSecret, alternateSecret], 3600);
       } catch (error) {
         expect((error as SessionCryptoError).code).toBe(SessionCryptoErrorCode.DECRYPTION_FAILED);
       }
@@ -448,22 +432,14 @@ describe('SessionCrypto - Sync Methods', () => {
     it('should work with single secret in array', () => {
       const original = { userId: '123' };
       const encrypted = SessionCrypto.encryptSync(original, validSecret);
-      const decrypted = SessionCrypto.decryptWithSecretsSync(
-        encrypted,
-        [validSecret],
-        3600
-      );
+      const decrypted = SessionCrypto.decryptWithSecretsSync(encrypted, [validSecret], 3600);
       expect(decrypted).toEqual(original);
     });
 
     it('should try secrets in order (performance)', () => {
       const original = { userId: '123' };
       const encrypted = SessionCrypto.encryptSync(original, alternateSecret);
-      const decrypted = SessionCrypto.decryptWithSecretsSync(
-        encrypted,
-        [alternateSecret, validSecret],
-        3600
-      );
+      const decrypted = SessionCrypto.decryptWithSecretsSync(encrypted, [alternateSecret, validSecret], 3600);
       expect(decrypted).toEqual(original);
     });
   });
@@ -488,8 +464,8 @@ describe('SessionCrypto - Sync Methods', () => {
         userId: '123',
         metadata: {
           roles: ['admin', 'user'],
-          settings: { theme: 'dark' }
-        }
+          settings: { theme: 'dark' },
+        },
       };
 
       // Encrypt with async, decrypt with sync
@@ -506,7 +482,7 @@ describe('SessionCrypto - Sync Methods', () => {
     it('should handle unicode data cross-platform', async () => {
       const original = {
         userId: '123',
-        tenantName: '日本語 🎉'
+        tenantName: '日本語 🎉',
       };
       const encryptedAsync = await SessionCrypto.encrypt(original, validSecret);
       const decryptedSync = SessionCrypto.decryptSync(encryptedAsync, validSecret, 3600);
@@ -521,13 +497,9 @@ describe('SessionCrypto - Sync Methods', () => {
 
       // Encrypt with async, decrypt with sync using multiple secrets
       const encryptedAsync = await SessionCrypto.encrypt(original, validSecret);
-      const decryptedSync = SessionCrypto.decryptWithSecretsSync(
-        encryptedAsync,
-        [alternateSecret, validSecret],
-        3600
-      );
+      const decryptedSync = SessionCrypto.decryptWithSecretsSync(encryptedAsync, [alternateSecret, validSecret], 3600);
       expect(decryptedSync).toEqual(original);
-      
+
       // Encrypt with sync, decrypt with async using multiple secrets
       const encryptedSync = SessionCrypto.encryptSync(original, alternateSecret);
       const decryptedAsync = await SessionCrypto.decryptWithSecrets(
@@ -555,7 +527,7 @@ describe('SessionCrypto - Sync Methods', () => {
       bytes[0] = 99;
       const modifiedEncrypted = bytes.toString('base64');
       expect(() => SessionCrypto.decryptSync(modifiedEncrypted, validSecret, 3600)).toThrow(SessionCryptoError);
-      
+
       try {
         SessionCrypto.decryptSync(modifiedEncrypted, validSecret, 3600);
       } catch (error) {
@@ -574,7 +546,7 @@ describe('SessionCrypto - Sync Methods', () => {
       crypto.createCipheriv = jest.fn().mockImplementation(() => {
         throw new Error('Cipher creation failed');
       });
-      
+
       try {
         SessionCrypto.encryptSync({ userId: '123' }, validSecret);
         fail('Should have thrown');

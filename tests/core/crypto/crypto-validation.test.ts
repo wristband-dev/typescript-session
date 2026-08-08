@@ -4,25 +4,17 @@ import { SessionCryptoError, SessionCryptoErrorCode } from '../../../src/error';
 describe('SessionCrypto - Validation', () => {
   describe('secret validation', () => {
     it('should reject empty string secret', async () => {
-      await expect(
-        SessionCrypto.encrypt({ userId: '123' }, '')
-      ).rejects.toThrow(SessionCryptoError);
-      
-      await expect(
-        SessionCrypto.encrypt({ userId: '123' }, '')
-      ).rejects.toThrow('non-empty string');
+      await expect(SessionCrypto.encrypt({ userId: '123' }, '')).rejects.toThrow(SessionCryptoError);
+
+      await expect(SessionCrypto.encrypt({ userId: '123' }, '')).rejects.toThrow('non-empty string');
     });
 
     it('should reject secret shorter than 32 characters', async () => {
       const shortSecret = 'a'.repeat(31);
-      
-      await expect(
-        SessionCrypto.encrypt({ userId: '123' }, shortSecret)
-      ).rejects.toThrow(SessionCryptoError);
-      
-      await expect(
-        SessionCrypto.encrypt({ userId: '123' }, shortSecret)
-      ).rejects.toThrow('at least 32 characters');
+
+      await expect(SessionCrypto.encrypt({ userId: '123' }, shortSecret)).rejects.toThrow(SessionCryptoError);
+
+      await expect(SessionCrypto.encrypt({ userId: '123' }, shortSecret)).rejects.toThrow('at least 32 characters');
     });
 
     it('should accept secret exactly 32 characters', async () => {
@@ -40,13 +32,9 @@ describe('SessionCrypto - Validation', () => {
     });
 
     it('should reject non-string secret', async () => {
-      await expect(
-        SessionCrypto.encrypt({ userId: '123' }, 12345 as any)
-      ).rejects.toThrow(SessionCryptoError);
-      
-      await expect(
-        SessionCrypto.encrypt({ userId: '123' }, null as any)
-      ).rejects.toThrow(SessionCryptoError);
+      await expect(SessionCrypto.encrypt({ userId: '123' }, 12345 as any)).rejects.toThrow(SessionCryptoError);
+
+      await expect(SessionCrypto.encrypt({ userId: '123' }, null as any)).rejects.toThrow(SessionCryptoError);
     });
 
     it('should include actual length in error message', async () => {
@@ -72,54 +60,43 @@ describe('SessionCrypto - Validation', () => {
     });
 
     it('should reject non-array secrets', async () => {
-      await expect(
-        SessionCrypto.decryptWithSecrets(encryptedValue, null as any, 3600)
-      ).rejects.toThrow(SessionCryptoError);
-      
-      await expect(
-        SessionCrypto.decryptWithSecrets(encryptedValue, 'not-array' as any, 3600)
-      ).rejects.toThrow('must be an array');
+      await expect(SessionCrypto.decryptWithSecrets(encryptedValue, null as any, 3600)).rejects.toThrow(
+        SessionCryptoError
+      );
+
+      await expect(SessionCrypto.decryptWithSecrets(encryptedValue, 'not-array' as any, 3600)).rejects.toThrow(
+        'must be an array'
+      );
     });
 
     it('should reject empty secrets array', async () => {
-      await expect(
-        SessionCrypto.decryptWithSecrets(encryptedValue, [], 3600)
-      ).rejects.toThrow(SessionCryptoError);
+      await expect(SessionCrypto.decryptWithSecrets(encryptedValue, [], 3600)).rejects.toThrow(SessionCryptoError);
 
-      await expect(
-        SessionCrypto.decryptWithSecrets(encryptedValue, [], 3600)
-      ).rejects.toThrow('At least one secret is required');
+      await expect(SessionCrypto.decryptWithSecrets(encryptedValue, [], 3600)).rejects.toThrow(
+        'At least one secret is required'
+      );
     });
 
     it('should reject more than 3 secrets', async () => {
-      const tooManySecrets = [
-        'a'.repeat(32),
-        'b'.repeat(32),
-        'c'.repeat(32),
-        'd'.repeat(32)
-      ];
+      const tooManySecrets = ['a'.repeat(32), 'b'.repeat(32), 'c'.repeat(32), 'd'.repeat(32)];
 
-      await expect(
-        SessionCrypto.decryptWithSecrets(encryptedValue, tooManySecrets, 3600)
-      ).rejects.toThrow(SessionCryptoError);
+      await expect(SessionCrypto.decryptWithSecrets(encryptedValue, tooManySecrets, 3600)).rejects.toThrow(
+        SessionCryptoError
+      );
 
-      await expect(
-        SessionCrypto.decryptWithSecrets(encryptedValue, tooManySecrets, 3600)
-      ).rejects.toThrow('Maximum 3 secrets allowed');
+      await expect(SessionCrypto.decryptWithSecrets(encryptedValue, tooManySecrets, 3600)).rejects.toThrow(
+        'Maximum 3 secrets allowed'
+      );
     });
 
     it('should accept exactly 3 secrets', async () => {
       // All different secrets (none match validSecret), so decryption will fail
-      const threeSecrets = [
-        'b'.repeat(32),
-        'c'.repeat(32),
-        'd'.repeat(32)
-      ];
+      const threeSecrets = ['b'.repeat(32), 'c'.repeat(32), 'd'.repeat(32)];
 
       // Passes validation, fails decryption (wrong secrets)
-      await expect(
-        SessionCrypto.decryptWithSecrets(encryptedValue, threeSecrets, 3600)
-      ).rejects.toThrow(SessionCryptoError);
+      await expect(SessionCrypto.decryptWithSecrets(encryptedValue, threeSecrets, 3600)).rejects.toThrow(
+        SessionCryptoError
+      );
     });
 
     it('should accept single secret in array', async () => {
@@ -127,32 +104,29 @@ describe('SessionCrypto - Validation', () => {
       const oneSecret = ['b'.repeat(32)];
 
       // Passes validation, fails decryption (wrong secret)
-      await expect(
-        SessionCrypto.decryptWithSecrets(encryptedValue, oneSecret, 3600)
-      ).rejects.toThrow(SessionCryptoError);
+      await expect(SessionCrypto.decryptWithSecrets(encryptedValue, oneSecret, 3600)).rejects.toThrow(
+        SessionCryptoError
+      );
     });
 
     it('should accept two secrets', async () => {
       // Both different secrets, so decryption will fail
-      const twoSecrets = [
-        'b'.repeat(32),
-        'c'.repeat(32)
-      ];
+      const twoSecrets = ['b'.repeat(32), 'c'.repeat(32)];
 
       // Passes validation, fails decryption (wrong secrets)
-      await expect(
-        SessionCrypto.decryptWithSecrets(encryptedValue, twoSecrets, 3600)
-      ).rejects.toThrow(SessionCryptoError);
+      await expect(SessionCrypto.decryptWithSecrets(encryptedValue, twoSecrets, 3600)).rejects.toThrow(
+        SessionCryptoError
+      );
     });
 
     it('should reject undefined secrets', async () => {
-      await expect(
-        SessionCrypto.decryptWithSecrets(encryptedValue, undefined as any, 3600)
-      ).rejects.toThrow(SessionCryptoError);
+      await expect(SessionCrypto.decryptWithSecrets(encryptedValue, undefined as any, 3600)).rejects.toThrow(
+        SessionCryptoError
+      );
 
-      await expect(
-        SessionCrypto.decryptWithSecrets(encryptedValue, undefined as any, 3600)
-      ).rejects.toThrow('must be an array');
+      await expect(SessionCrypto.decryptWithSecrets(encryptedValue, undefined as any, 3600)).rejects.toThrow(
+        'must be an array'
+      );
     });
 
     it('should reject object as secrets', async () => {
@@ -162,13 +136,13 @@ describe('SessionCrypto - Validation', () => {
     });
 
     it('should reject falsy non-null/undefined secrets', async () => {
-      await expect(
-        SessionCrypto.decryptWithSecrets(encryptedValue, 0 as any, 3600)
-      ).rejects.toThrow(SessionCryptoError);
+      await expect(SessionCrypto.decryptWithSecrets(encryptedValue, 0 as any, 3600)).rejects.toThrow(
+        SessionCryptoError
+      );
 
-      await expect(
-        SessionCrypto.decryptWithSecrets(encryptedValue, '' as any, 3600)
-      ).rejects.toThrow('must be an array');
+      await expect(SessionCrypto.decryptWithSecrets(encryptedValue, '' as any, 3600)).rejects.toThrow(
+        'must be an array'
+      );
     });
   });
 
@@ -177,49 +151,39 @@ describe('SessionCrypto - Validation', () => {
     const encryptedValue = 'AQABkx7f2g...'; // Mock encrypted value
 
     it('should reject zero maxAge', async () => {
-      await expect(
-        SessionCrypto.decrypt(encryptedValue, validSecret, 0)
-      ).rejects.toThrow(SessionCryptoError);
+      await expect(SessionCrypto.decrypt(encryptedValue, validSecret, 0)).rejects.toThrow(SessionCryptoError);
 
-      await expect(
-        SessionCrypto.decrypt(encryptedValue, validSecret, 0)
-      ).rejects.toThrow('maxAge must be greater than 0');
+      await expect(SessionCrypto.decrypt(encryptedValue, validSecret, 0)).rejects.toThrow(
+        'maxAge must be greater than 0'
+      );
     });
 
     it('should reject negative maxAge', async () => {
-      await expect(
-        SessionCrypto.decrypt(encryptedValue, validSecret, -100)
-      ).rejects.toThrow(SessionCryptoError);
-      
-      await expect(
-        SessionCrypto.decrypt(encryptedValue, validSecret, -100)
-      ).rejects.toThrow('maxAge must be greater than 0');
+      await expect(SessionCrypto.decrypt(encryptedValue, validSecret, -100)).rejects.toThrow(SessionCryptoError);
+
+      await expect(SessionCrypto.decrypt(encryptedValue, validSecret, -100)).rejects.toThrow(
+        'maxAge must be greater than 0'
+      );
     });
 
     it('should accept maxAge of 1', async () => {
       // Will fail decryption but pass validation
-      await expect(
-        SessionCrypto.decrypt(encryptedValue, validSecret, 1)
-      ).rejects.toThrow(); // Fails at decryption, not validation
+      await expect(SessionCrypto.decrypt(encryptedValue, validSecret, 1)).rejects.toThrow(); // Fails at decryption, not validation
     });
 
     it('should accept large maxAge values', async () => {
       const oneYear = 365 * 24 * 60 * 60;
 
       // Will fail decryption but pass validation
-      await expect(
-        SessionCrypto.decrypt(encryptedValue, validSecret, oneYear)
-      ).rejects.toThrow(); // Fails at decryption, not validation
+      await expect(SessionCrypto.decrypt(encryptedValue, validSecret, oneYear)).rejects.toThrow(); // Fails at decryption, not validation
     });
 
     it('should reject non-number maxAge', async () => {
-      await expect(
-        SessionCrypto.decrypt(encryptedValue, validSecret, '3600' as any)
-      ).rejects.toThrow(SessionCryptoError);
+      await expect(SessionCrypto.decrypt(encryptedValue, validSecret, '3600' as any)).rejects.toThrow(
+        SessionCryptoError
+      );
 
-      await expect(
-        SessionCrypto.decrypt(encryptedValue, validSecret, null as any)
-      ).rejects.toThrow(SessionCryptoError);
+      await expect(SessionCrypto.decrypt(encryptedValue, validSecret, null as any)).rejects.toThrow(SessionCryptoError);
     });
   });
 
@@ -227,29 +191,19 @@ describe('SessionCrypto - Validation', () => {
     const validSecret = 'a'.repeat(32);
 
     it('should reject null session data', async () => {
-      await expect(
-        SessionCrypto.encrypt(null as any, validSecret)
-      ).rejects.toThrow(SessionCryptoError);
+      await expect(SessionCrypto.encrypt(null as any, validSecret)).rejects.toThrow(SessionCryptoError);
 
-      await expect(
-        SessionCrypto.encrypt(null as any, validSecret)
-      ).rejects.toThrow('plain object');
+      await expect(SessionCrypto.encrypt(null as any, validSecret)).rejects.toThrow('plain object');
     });
 
     it('should reject undefined session data', async () => {
-      await expect(
-        SessionCrypto.encrypt(undefined as any, validSecret)
-      ).rejects.toThrow(SessionCryptoError);
+      await expect(SessionCrypto.encrypt(undefined as any, validSecret)).rejects.toThrow(SessionCryptoError);
     });
 
     it('should reject array as session data', async () => {
-      await expect(
-        SessionCrypto.encrypt([] as any, validSecret)
-      ).rejects.toThrow(SessionCryptoError);
+      await expect(SessionCrypto.encrypt([] as any, validSecret)).rejects.toThrow(SessionCryptoError);
 
-      await expect(
-        SessionCrypto.encrypt([1, 2, 3] as any, validSecret)
-      ).rejects.toThrow('plain object');
+      await expect(SessionCrypto.encrypt([1, 2, 3] as any, validSecret)).rejects.toThrow('plain object');
     });
 
     it('should accept empty object', async () => {
@@ -262,7 +216,7 @@ describe('SessionCrypto - Validation', () => {
       const sessionData = {
         userId: '123',
         role: 'admin',
-        loginTime: Date.now()
+        loginTime: Date.now(),
       };
 
       const encrypted = await SessionCrypto.encrypt(sessionData, validSecret);
@@ -273,7 +227,7 @@ describe('SessionCrypto - Validation', () => {
     it('should handle data with functions by omitting them', async () => {
       const dataWithFunction = {
         userId: '123',
-        callback: (): any => console.log('test')
+        callback: (): any => console.log('test'),
       };
 
       // Should succeed - functions are silently omitted by JSON.stringify
@@ -291,15 +245,11 @@ describe('SessionCrypto - Validation', () => {
       const circular: any = { userId: '123' };
       circular.self = circular;
 
-      await expect(
-        SessionCrypto.encrypt(circular, validSecret)
-      ).rejects.toThrow(SessionCryptoError);
+      await expect(SessionCrypto.encrypt(circular, validSecret)).rejects.toThrow(SessionCryptoError);
     });
 
     it('should reject string as session data', async () => {
-      await expect(
-        SessionCrypto.encrypt('not an object' as any, validSecret)
-      ).rejects.toThrow(SessionCryptoError);
+      await expect(SessionCrypto.encrypt('not an object' as any, validSecret)).rejects.toThrow(SessionCryptoError);
 
       try {
         await SessionCrypto.encrypt('not an object' as any, validSecret);
@@ -310,15 +260,11 @@ describe('SessionCrypto - Validation', () => {
     });
 
     it('should reject number as session data', async () => {
-      await expect(
-        SessionCrypto.encrypt(123 as any, validSecret)
-      ).rejects.toThrow(SessionCryptoError);
+      await expect(SessionCrypto.encrypt(123 as any, validSecret)).rejects.toThrow(SessionCryptoError);
     });
 
     it('should reject boolean as session data', async () => {
-      await expect(
-        SessionCrypto.encrypt(true as any, validSecret)
-      ).rejects.toThrow(SessionCryptoError);
+      await expect(SessionCrypto.encrypt(true as any, validSecret)).rejects.toThrow(SessionCryptoError);
     });
 
     it('should reject string as session data (sync)', () => {
@@ -338,35 +284,23 @@ describe('SessionCrypto - Validation', () => {
     const validSecret = 'a'.repeat(32);
 
     it('should reject empty string', async () => {
-      await expect(
-        SessionCrypto.decrypt('', validSecret, 3600)
-      ).rejects.toThrow(SessionCryptoError);
-      
-      await expect(
-        SessionCrypto.decrypt('', validSecret, 3600)
-      ).rejects.toThrow('non-empty string');
+      await expect(SessionCrypto.decrypt('', validSecret, 3600)).rejects.toThrow(SessionCryptoError);
+
+      await expect(SessionCrypto.decrypt('', validSecret, 3600)).rejects.toThrow('non-empty string');
     });
 
     it('should reject null encrypted value', async () => {
-      await expect(
-        SessionCrypto.decrypt(null as any, validSecret, 3600)
-      ).rejects.toThrow(SessionCryptoError);
+      await expect(SessionCrypto.decrypt(null as any, validSecret, 3600)).rejects.toThrow(SessionCryptoError);
     });
 
     it('should reject undefined encrypted value', async () => {
-      await expect(
-        SessionCrypto.decrypt(undefined as any, validSecret, 3600)
-      ).rejects.toThrow(SessionCryptoError);
+      await expect(SessionCrypto.decrypt(undefined as any, validSecret, 3600)).rejects.toThrow(SessionCryptoError);
     });
 
     it('should reject non-string encrypted value', async () => {
-      await expect(
-        SessionCrypto.decrypt(12345 as any, validSecret, 3600)
-      ).rejects.toThrow(SessionCryptoError);
+      await expect(SessionCrypto.decrypt(12345 as any, validSecret, 3600)).rejects.toThrow(SessionCryptoError);
 
-      await expect(
-        SessionCrypto.decrypt({} as any, validSecret, 3600)
-      ).rejects.toThrow(SessionCryptoError);
+      await expect(SessionCrypto.decrypt({} as any, validSecret, 3600)).rejects.toThrow(SessionCryptoError);
     });
   });
 

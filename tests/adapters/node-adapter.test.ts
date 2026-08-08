@@ -102,7 +102,7 @@ describe('NodeAdapter', () => {
         path: '/',
         secure: true,
         httpOnly: true,
-        sameSite: 'Lax'
+        sameSite: 'Lax',
       };
       expect(() => adapter.writeCookie('session', 'value', options)).toThrow(SessionError);
       expect(() => adapter.writeCookie('session', 'value', options)).toThrow('No response object available');
@@ -117,7 +117,7 @@ describe('NodeAdapter', () => {
         path: '/',
         secure: true,
         httpOnly: true,
-        sameSite: 'Lax'
+        sameSite: 'Lax',
       };
       adapter.writeCookie('session', 'value123', options);
       const setCookie = res.getHeader('set-cookie');
@@ -139,7 +139,7 @@ describe('NodeAdapter', () => {
         path: '/',
         secure: true,
         httpOnly: true,
-        sameSite: 'Lax'
+        sameSite: 'Lax',
       };
       adapter.writeCookie('session', 'value1', options);
       adapter.writeCookie('csrf', 'value2', options);
@@ -158,7 +158,7 @@ describe('NodeAdapter', () => {
         path: '/',
         secure: true,
         httpOnly: true,
-        sameSite: 'Lax'
+        sameSite: 'Lax',
       };
       res.setHeader('set-cookie', 'existing=cookie; Path=/');
       adapter.writeCookie('session', 'value', options);
@@ -178,7 +178,7 @@ describe('NodeAdapter', () => {
         path: '/',
         secure: true,
         httpOnly: true,
-        sameSite: 'Lax'
+        sameSite: 'Lax',
       };
       res.setHeader('set-cookie', ['first=cookie; Path=/', 'second=cookie; Path=/']);
       adapter.writeCookie('session', 'value', options);
@@ -200,7 +200,7 @@ describe('NodeAdapter', () => {
         domain: '.example.com',
         secure: true,
         httpOnly: true,
-        sameSite: 'Lax'
+        sameSite: 'Lax',
       };
       adapter.writeCookie('session', 'value', options);
       const setCookie = res.getHeader('set-cookie');
@@ -216,7 +216,7 @@ describe('NodeAdapter', () => {
         path: '/api',
         secure: true,
         httpOnly: true,
-        sameSite: 'Lax'
+        sameSite: 'Lax',
       };
       adapter.writeCookie('session', 'value', options);
       const setCookie = res.getHeader('set-cookie');
@@ -232,7 +232,7 @@ describe('NodeAdapter', () => {
         path: '/',
         secure: true,
         httpOnly: true,
-        sameSite: 'Strict'
+        sameSite: 'Strict',
       };
       adapter.writeCookie('session', 'value', options);
       const setCookie = res.getHeader('set-cookie');
@@ -248,7 +248,7 @@ describe('NodeAdapter', () => {
         path: '/',
         secure: true,
         httpOnly: true,
-        sameSite: 'None'
+        sameSite: 'None',
       };
       adapter.writeCookie('session', 'value', options);
       const setCookie = res.getHeader('set-cookie');
@@ -264,7 +264,7 @@ describe('NodeAdapter', () => {
         path: '/',
         secure: false,
         httpOnly: true,
-        sameSite: 'Lax'
+        sameSite: 'Lax',
       };
       adapter.writeCookie('session', 'value', options);
       const setCookie = res.getHeader('set-cookie') as string;
@@ -280,7 +280,7 @@ describe('NodeAdapter', () => {
         path: '/',
         secure: true,
         httpOnly: false,
-        sameSite: 'Lax'
+        sameSite: 'Lax',
       };
       adapter.writeCookie('session', 'value', options);
       const setCookie = res.getHeader('set-cookie') as string;
@@ -296,7 +296,7 @@ describe('NodeAdapter', () => {
         path: '/',
         secure: true,
         httpOnly: true,
-        sameSite: 'Lax'
+        sameSite: 'Lax',
       };
       adapter.writeCookie('session', 'value with spaces', options);
       const setCookie = res.getHeader('set-cookie') as string;
@@ -312,7 +312,7 @@ describe('NodeAdapter', () => {
         path: '/',
         secure: true,
         httpOnly: true,
-        sameSite: 'Lax'
+        sameSite: 'Lax',
       };
       adapter.writeCookie('session', '', options);
       const setCookie = res.getHeader('set-cookie') as string;
@@ -351,7 +351,7 @@ describe('NodeAdapter', () => {
         path: '/',
         secure: true,
         httpOnly: true,
-        sameSite: 'Lax'
+        sameSite: 'Lax',
       };
 
       try {

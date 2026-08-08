@@ -50,7 +50,7 @@ describe('getSession', () => {
 
     it('should handle invalid/corrupted cookie gracefully', async () => {
       const mockRequest = new Request('http://localhost', {
-        headers: { 'Cookie': 'session=invalid-encrypted-value' }
+        headers: { Cookie: 'session=invalid-encrypted-value' },
       });
       const session = await getSession(mockRequest, validOptions);
       // Should create new empty session instead of throwing
@@ -70,20 +70,20 @@ describe('getSession', () => {
       expect(session.delete).toBeDefined();
       expect(session.toJSON).toBeDefined();
       expect(session.toString).toBeDefined();
-      
+
       // Node-specific methods
       expect(session.save).toBeDefined();
       expect(session.destroy).toBeDefined();
       expect(session.enableDeferredMode).toBeDefined();
       expect(session.flush).toBeDefined();
       expect(session.flushSync).toBeDefined();
-      
+
       // Edge-specific methods
       expect(session.saveToResponse).toBeDefined();
       expect(session.destroyToResponse).toBeDefined();
       expect(session.getCookieDataForSave).toBeDefined();
       expect(session.getCookieDataForDestroy).toBeDefined();
-      
+
       // Wristband-specific methods
       expect(session.fromCallback).toBeDefined();
       expect(session.getSessionResponse).toBeDefined();
@@ -124,7 +124,7 @@ describe('getSession', () => {
     it('should propagate validation errors from prepareOptions', async () => {
       const mockRequest = new Request('http://localhost');
       const options: SessionOptions = { secrets: 'short' };
-      
+
       try {
         await getSession(mockRequest, options);
         fail('Should have thrown');

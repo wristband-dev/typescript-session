@@ -10,43 +10,43 @@ export type SameSiteOption = 'Strict' | 'Lax' | 'None';
 
 /**
  * Configuration options for session management.
- * 
+ *
  * These options control how sessions are created, encrypted, and stored in cookies.
  * All cookie-related options follow standard HTTP cookie specifications.
  */
 export interface SessionOptions {
-  /** 
+  /**
    * Session cookie name.
-   * 
+   *
    * @default 'session'
    */
   cookieName?: string;
   /**
-   * Secret key(s) for encryption. 
-   * 
+   * Secret key(s) for encryption.
+   *
    * - Single string: Used for both encryption and decryption
    * - Array of strings: First key encrypts, all keys tried for decryption (enables key rotation)
    * - Must be at least 32 characters for security
    * - Use cryptographically random strings (e.g., from a secure password generator)
-   * 
+   *
    * @example
    * ```typescript
    * // Single secret
    * secrets: process.env.SESSION_SECRET
-   * 
+   *
    * // Key rotation (old key still works for existing sessions)
    * secrets: [process.env.NEW_SECRET, process.env.OLD_SECRET]
    * ```
    */
   secrets: string | string[];
-  /** 
+  /**
    * Session expiration time in seconds.
-   * 
+   *
    * Determines how long a session remains valid. After this time,
    * the session cookie expires and users must re-authenticate.
-   * 
+   *
    * @default 3600 (1 hour)
-   * 
+   *
    * @example
    * ```typescript
    * maxAge: 24 * 60 * 60  // 24 hours
@@ -54,75 +54,75 @@ export interface SessionOptions {
    * ```
    */
   maxAge?: number;
-  /** 
+  /**
    * Cookie domain attribute.
-   * 
+   *
    * Controls which domains can access the cookie:
    * - Undefined: Cookie only sent to current domain
    * - '.example.com': Cookie sent to example.com and all subdomains
    * - 'app.example.com': Cookie only sent to app.example.com
-   * 
+   *
    * @default undefined (current domain only)
    */
   domain?: string;
-  /** 
+  /**
    * Cookie path attribute. Specifies which URL paths can access the cookie.
-   * 
+   *
    * @default '/' (all paths)
    */
   path?: string;
-  /** 
+  /**
    * Cookie Secure flag. If true, cookie is only sent over HTTPS connections.
-   * 
+   *
    * **Security recommendation:** Always use true in production.
    * Only set to false for local development over HTTP when using browsers like
    * Safari that can't handle secure cookies over localhost.
-   * 
+   *
    * @default true
    */
   secure?: boolean;
   /**
    * Cookie SameSite setting. Controls whether cookies are sent on cross-site requests.
-   * 
+   *
    * - 'Strict': Cookies only sent for same-site requests (best CSRF protection, default)
    * - 'Lax': Cookies sent for same-site + top-level navigation GET requests
    * - 'None': Cookies sent for all requests (requires secure: true, needs CSRF protection)
-   * 
+   *
    * Accepts either lowercase or capitalized values for convenience; output is normalized to title case.
-   * 
+   *
    * @default 'Lax'
    */
-  sameSite?: SameSiteOption  | 'lax' | 'strict' | 'none';
-  /** 
+  sameSite?: SameSiteOption | 'lax' | 'strict' | 'none';
+  /**
    * Name of the CSRF cookie (only used if enableCsrfProtection is true).
-   * 
+   *
    * @default 'CSRF-TOKEN'
    */
   csrfCookieName?: string;
-  /** 
+  /**
    * Domain for CSRF cookie. Follows same rules as 'domain' option.
-   * 
+   *
    * @default Same as 'domain' if specified, otherwise undefined
    */
   csrfCookieDomain?: string;
   /**
    * Enable CSRF protection by generating and validating CSRF tokens.
-   * 
+   *
    * **Recommendation:**
    * Only enable CSRF protection if you use sameSite: 'None' or want defense-in-depth.
    * Otherwise, rely on the default sameSite: 'Strict' or 'Lax' setting for CSRF protection,
    * as those are sufficient in most cases.
-   * 
+   *
    * When enabled:
    * - A CSRF token is automatically generated after authentication when you call fromCallback()
    * - The token is stored in both the session and a separate cookie
    * - CSRF cookies are deleted when calling destroy() or destroyToResponse()
    * - Your frontend must include the CSRF token in request headers for server validation
-   * 
+   *
    * When disabled:
    * - No CSRF tokens are generated
    * - No CSRF cookies are set or deleted
-   * 
+   *
    * @default false
    */
   enableCsrfProtection?: boolean;
@@ -130,28 +130,28 @@ export interface SessionOptions {
 
 /**
  * Base session data interface that all session types must extend.
- * 
+ *
  * **Using with Wristband:**
  * Pre-defined fields for Wristband authentication (userId, tenantId, accessToken, etc.)
  * are automatically populated when you call fromCallback() after authentication.
- * 
+ *
  * **Using without Wristband:**
  * All fields are optional and can be ignored. Extend this interface with your own
  * custom fields and use the session SDK as a general-purpose encrypted session library.
- * 
+ *
  * @example
  * ```typescript
  * // With Wristband
  * const session = await getSession(request, options);
  * session.fromCallback(callbackData);  // Populates Wristband fields
  * await session.save();
- * 
+ *
  * // Without Wristband (custom session data)
  * interface MySessionData extends SessionData {
  *   cartItems?: string[];
  *   theme?: string;
  * }
- * 
+ *
  * const session = await getSession<MySessionData>(request, options);
  * session.cartItems = ['item1', 'item2'];
  * session.theme = 'dark';
@@ -180,7 +180,7 @@ export interface SessionData {
    * requested during authentication.
    */
   refreshToken?: string;
-  /** 
+  /**
    * Custom domain for the tenant, if configured. Only present if a tenant custom domain was used during authentication.
    */
   tenantCustomDomain?: string;
@@ -193,10 +193,10 @@ export interface SessionData {
 export interface CookieOptions {
   /**
    * Maximum age of the cookie in seconds.
-   * 
+   *
    * Defines how long the cookie should persist. After this time,
    * the cookie expires and is removed by the browser.
-   * 
+   *
    * @example
    * ```typescript
    * maxAge: 3600      // 1 hour (60 * 60)
@@ -207,23 +207,23 @@ export interface CookieOptions {
   maxAge: number;
   /**
    * Cookie domain attribute.
-   * 
+   *
    * Controls which domains can access the cookie:
    * - Undefined: Cookie only sent to the exact domain that set it
    * - '.example.com': Cookie sent to example.com and all subdomains
    * - 'app.example.com': Cookie only sent to app.example.com
-   * 
+   *
    * @default undefined (current domain only, no subdomains)
    */
   domain?: string;
   /**
    * Cookie path attribute.
-   * 
+   *
    * Specifies which URL paths on the domain can access the cookie.
    * The cookie is available to the specified path and all subpaths.
-   * 
+   *
    * @default '/' (all paths on the domain)
-   * 
+   *
    * @example
    * ```typescript
    * path: '/'           // Available to entire site
@@ -234,37 +234,37 @@ export interface CookieOptions {
   path: string;
   /**
    * Cookie Secure flag.
-   * 
+   *
    * When true, the cookie is only sent over HTTPS connections,
    * protecting it from man-in-the-middle attacks.
-   * 
+   *
    * **Security recommendation:** Always use true in production.
    * Set to false only for local development over HTTP.
-   * 
+   *
    * @default true
    */
   secure: boolean;
   /**
    * Cookie HttpOnly flag.
-   * 
+   *
    * When true, prevents JavaScript from accessing the cookie via
    * `document.cookie`, protecting against XSS attacks.
-   * 
+   *
    * **Security recommendation:** Always use true for session cookies
    * containing sensitive data like authentication tokens.
-   * 
+   *
    * @default true
    */
   httpOnly: boolean;
   /**
    * Cookie SameSite attribute that controls whether cookies are sent on cross-site requests.
-   * 
+   *
    * - `'Strict'`: Cookies only sent for same-site requests (strongest protection)
    * - `'Lax'`: Cookies sent for same-site + top-level navigation (default in modern browsers)
    * - `'None'`: Cookies sent for all requests (requires `secure: true`)
-   * 
+   *
    * @default 'Lax'
-   * 
+   *
    * @example
    * ```typescript
    * sameSite: 'Strict'  // Best for auth cookies on same domain
@@ -277,28 +277,28 @@ export interface CookieOptions {
 
 /**
  * Session interface providing methods for reading, writing, and managing session data.
- * 
+ *
  * This is a general-purpose encrypted session library that works with any Node.js or Edge runtime.
  * It includes optional Wristband-specific helper methods (fromCallback, getSessionResponse, getTokenResponse)
  * that can be ignored if not using Wristband authentication.
- * 
+ *
  * Sessions provide both method-based access (get/set) and direct property access via proxy.
  * The generic type parameter allows for type-safe custom session fields.
- * 
+ *
  * @template T - Session data type extending SessionData
- * 
+ *
  * @example
  * ```typescript
  * // With Wristband
  * const session = await getSession(request, options);
  * session.fromCallback(callbackData);  // Wristband helper method
  * await session.save();
- * 
+ *
  * // Without Wristband (general-purpose session management)
  * interface CustomSession extends SessionData {
  *   cartItems?: string[];
  * }
- * 
+ *
  * const session = await getSession<CustomSession>(request, options);
  * session.cartItems = ['item1'];  // Direct property access
  * session.set('userId', '123');   // Method-based access
@@ -309,16 +309,16 @@ export interface CookieOptions {
 export interface Session<T extends SessionData = SessionData> {
   /**
    * Get a value from the session by key.
-   * 
+   *
    * @param key - The session data key to retrieve
    * @returns The value associated with the key, or undefined if not present
    */
   get<K extends keyof T>(key: K): T[K] | undefined;
   /**
    * Set a value in the session.
-   * 
+   *
    * Changes are kept in memory until save() or saveToResponse() is called.
-   * 
+   *
    * @param key - The session data key to set
    * @param value - The value to store
    * @throws Error if session has been destroyed
@@ -326,39 +326,39 @@ export interface Session<T extends SessionData = SessionData> {
   set<K extends keyof T>(key: K, value: T[K]): void;
   /**
    * Delete a value from the session.
-   * 
+   *
    * Changes are kept in memory until save() or saveToResponse() is called.
-   * 
+   *
    * @param key - The session data key to delete
    * @throws Error if session has been destroyed
    */
   delete<K extends keyof T>(key: K): void;
   /**
    * Serializes the session data to JSON.
-   * 
+   *
    * @returns {T} The session data object
    */
   toJSON(): T;
   /**
    * Save the session by writing cookies.
-   * 
+   *
    * In normal mode: Immediately encrypts and writes session cookies.
    * In deferred mode: Marks session for save; call flush() to actually write.
-   * 
+   *
    * For Edge/browser environments, use saveToResponse() instead.
-   * 
+   *
    * @throws Error if session is destroyed or no response object available
    */
   save(): Promise<void>;
   /**
    * Save the session by returning a new Response with Set-Cookie headers appended.
-   * 
+   *
    * Use this in Edge runtimes (Cloudflare Workers, Vercel Edge, etc.) where
    * you don't have direct access to a response object for writing cookies.
-   * 
+   *
    * This method clones the provided response and appends session cookie headers,
    * preserving any existing headers, status, and body from the original response.
-   * 
+   *
    * @param response - The Response object to clone and add session cookies to
    * @returns New Response with session cookies appended to existing headers
    * @throws Error if session has been destroyed
@@ -366,71 +366,71 @@ export interface Session<T extends SessionData = SessionData> {
   saveToResponse(response: Response): Promise<Response>;
   /**
    * Enable deferred mode for Express and similar frameworks.
-   * 
+   *
    * **Why it's needed - PERFORMANCE:**
    * Prevents multiple expensive encryption operations per request.
    * When save() is called multiple times (e.g., in middleware + route handlers),
    * only one encryption happens at flush().
-   * 
+   *
    * In deferred mode:
    * - save() and destroy() only set flags (no encryption/cookie writes)
    * - flush() or flushSync() actually encrypts and writes cookies ONCE
-   * 
+   *
    * ⚠️ Once enabled, deferred mode cannot be disabled for this session instance.
    */
   enableDeferredMode(): void;
   /**
    * Flush deferred operations by actually writing or deleting cookies.
-   * 
+   *
    * Only valid when deferred mode is enabled via enableDeferredMode().
    * Uses async encryption - works in all environments (Node.js, Edge, browser).
-   * 
+   *
    * @throws Error if deferred mode is not enabled or response object is unavailable
    */
   flush(): Promise<void>;
   /**
    * Flush deferred operations synchronously.
-   * 
+   *
    * Only valid when deferred mode is enabled via enableDeferredMode().
    * Uses Node.js crypto for synchronous encryption.
-   * 
+   *
    * ⚠️ Only available in Node.js environments. For Edge/browser, use async flush().
-   * 
+   *
    * @throws Error if node:crypto is not available or deferred mode is not enabled
    */
   flushSync(): void;
   /**
    * Destroy the session and clear all data.
-   * 
+   *
    * In normal mode: Immediately deletes session cookies.
    * In deferred mode: Marks session for destruction; call flush() to actually delete.
-   * 
+   *
    * For Edge/browser environments, use destroyToResponse() instead.
    */
   destroy(): void;
   /**
    * Destroy the session by returning a new Response with cookie deletion headers appended.
-   * 
+   *
    * Use this in Edge runtimes (Cloudflare Workers, Vercel Edge, etc.) where
    * you don't have direct access to a response object for writing cookies.
-   * 
+   *
    * This method clones the provided response and appends cookie deletion headers,
    * preserving any existing headers, status, and body from the original response.
-   * 
+   *
    * @param response - The Response object to clone and add cookie deletion headers to
    * @returns New Response with cookie deletion headers appended to existing headers
    */
   destroyToResponse(response: Response): Response;
   /**
    * Get prepared cookie data for manual cookie setting.
-   * 
+   *
    * Useful for frameworks that don't use standard Response objects (e.g., Next.js Server Actions).
    * Returns an array of cookie objects with name, value, and options that can be passed
    * directly to cookie-setting APIs like Next.js cookies().set()
-   * 
+   *
    * @returns Promise resolving to array of cookie data objects ready to be set
    * @throws Error if session has been destroyed
-   * 
+   *
    * @example
    * ```typescript
    * // Next.js Server Action helper
@@ -444,25 +444,25 @@ export interface Session<T extends SessionData = SessionData> {
   getCookieDataForSave(): Promise<Array<{ name: string; value: string; options: CookieOptions }>>;
   /**
    * Get prepared cookie data for destroying a session.
-   * 
+   *
    * Returns an array of cookie objects with empty values and expiration dates in the past,
    * which will delete the cookies when set. Use this in conjunction with destroy() for
    * frameworks that require manual cookie setting (e.g., Next.js Server Actions).
-   * 
+   *
    * This method is synchronous since no encryption is needed for empty cookie values.
    * It can be called after destroy() has been called on the session.
-   * 
+   *
    * @returns Array of cookie deletion data objects ready to be set
-   * 
+   *
    * @example
    * ```typescript
    * // Next.js Server Action helper
    * export async function destroySession(session) {
    *   session.destroy(); // Mark as destroyed, clear data
-   *   
+   *
    *   const cookieStore = await cookies();
    *   const cookieData = session.getCookieDataForDestroy();
-   *   
+   *
    *   for (const { name, value, options } of cookieData) {
    *     cookieStore.set(name, value, options); // Set empty cookies with past expiry
    *   }
@@ -472,11 +472,11 @@ export interface Session<T extends SessionData = SessionData> {
   getCookieDataForDestroy(): Array<{ name: string; value: string; options: CookieOptions }>;
   /**
    * Create session from Wristband callback data.
-   * 
+   *
    * This is a convenience method that builds session state from authentication
    * callback data and optionally merges custom fields. Call save() or return
    * saveToResponse() to persist the session.
-   * 
+   *
    * @param callbackData - Callback data containing tokens and user info
    * @param customFields - Optional additional fields to store (must be JSON-serializable)
    * @throws Error if session is destroyed, callbackData is missing, or customFields aren't serializable
@@ -485,10 +485,10 @@ export interface Session<T extends SessionData = SessionData> {
   fromCallback(callbackData: CallbackData, customFields?: Record<string, any>): void;
   /**
    * Create a SessionResponse for Wristband frontend SDKs.
-   * 
+   *
    * Extracts tenantId and userId from the session and returns them
    * in the format expected by Wristband's frontend SDKs.
-   * 
+   *
    * @param metadata - Optional custom metadata to include (must be JSON-serializable)
    * @returns SessionResponse containing tenantId, userId, and metadata
    * @throws Error if tenantId or userId are missing from session
@@ -497,17 +497,15 @@ export interface Session<T extends SessionData = SessionData> {
   getSessionResponse(metadata?: Record<string, any>): SessionResponse;
   /**
    * Create a TokenResponse for Wristband frontend SDKs.
-   * 
+   *
    * Extracts accessToken and expiresAt from the session and returns them
    * in the format expected by Wristband's frontend SDKs.
-   * 
+   *
    * @returns TokenResponse containing accessToken and expiresAt timestamp
    * @throws Error if accessToken or expiresAt are missing from session
    */
   getTokenResponse(): TokenResponse;
 }
-
-
 
 /**
  * User Info Role model representing a role assigned to a user.
@@ -625,10 +623,10 @@ export interface UserInfo {
 
 /**
  * Callback data from Wristband authentication.
- * 
+ *
  * This represents the complete data received after successful authentication,
  * including tokens, user information, and tenant details.
- * 
+ *
  * @example
  * ```typescript
  * const callbackData: CallbackData = {
@@ -730,7 +728,7 @@ export interface TokenResponse {
 
 /**
  * Adapter interface for reading and writing session cookies.
- * 
+ *
  * Implementations exist for both Node.js (IncomingMessage/ServerResponse)
  * and Web Standard (Request/Response) APIs.
  */
@@ -745,7 +743,7 @@ export interface SessionAdapter {
 
 /**
  * Internal normalized session options with all defaults applied.
- * 
+ *
  * Created by normalizeOptions() from user-provided SessionOptions.
  * All optional fields are resolved to required fields with defaults.
  */
@@ -770,22 +768,22 @@ export interface NormalizedSessionOptions {
   csrfCookieDomain?: string;
   /**
    * Enable CSRF protection by generating and validating CSRF tokens.
-   * 
+   *
    * **Recommendation:**
    * Only enable CSRF protection if you use sameSite: 'None' or want defense-in-depth.
    * Otherwise, rely on the default sameSite: 'Strict' or 'Lax' setting for CSRF protection,
    * as those are sufficient in most cases.
-   * 
+   *
    * When enabled:
    * - A CSRF token is automatically generated after authentication when you call fromCallback()
    * - The token is stored in both the session and a separate cookie
    * - CSRF cookies are deleted when calling destroy() or destroyToResponse()
    * - Your frontend must include the CSRF token in request headers for server validation
-   * 
+   *
    * When disabled:
    * - No CSRF tokens are generated
    * - No CSRF cookies are set or deleted
-   * 
+   *
    * @default false (sameSite: 'Strict' or 'Lax' provides sufficient CSRF protection)
    */
   enableCsrfProtection: boolean;

@@ -290,8 +290,8 @@ describe('SessionImpl - CSRF Protection', () => {
         session.set('userId', '123');
         const cookieData = await session.getCookieDataForSave();
         expect(cookieData.length).toBe(2);
-        const sessionCookie = cookieData.find(c => c.name === 'session');
-        const csrfCookie = cookieData.find(c => c.name === 'CSRF-TOKEN');
+        const sessionCookie = cookieData.find((c) => c.name === 'session');
+        const csrfCookie = cookieData.find((c) => c.name === 'CSRF-TOKEN');
         expect(sessionCookie).toBeDefined();
         expect(csrfCookie).toBeDefined();
         expect(sessionCookie!.options.httpOnly).toBe(true);
@@ -313,8 +313,8 @@ describe('SessionImpl - CSRF Protection', () => {
         session.set('userId', '123');
         const cookieData = session.getCookieDataForDestroy();
         expect(cookieData.length).toBe(2);
-        const sessionCookie = cookieData.find(c => c.name === 'session');
-        const csrfCookie = cookieData.find(c => c.name === 'CSRF-TOKEN');
+        const sessionCookie = cookieData.find((c) => c.name === 'session');
+        const csrfCookie = cookieData.find((c) => c.name === 'CSRF-TOKEN');
         expect(sessionCookie).toBeDefined();
         expect(csrfCookie).toBeDefined();
         expect(sessionCookie!.value).toBe('');
@@ -418,7 +418,7 @@ describe('SessionImpl - CSRF Protection', () => {
       const session = SessionImpl.createNew<TestSessionData>(adapter as any, optionsWithCsrf);
       session.set('userId', '123');
       await session.save();
-      const csrfCall = adapter.writeCookie.mock.calls.find(call => call[0] === 'CSRF-TOKEN');
+      const csrfCall = adapter.writeCookie.mock.calls.find((call) => call[0] === 'CSRF-TOKEN');
       expect(csrfCall).toBeDefined();
       expect(csrfCall![2].httpOnly).toBe(false);
     });
@@ -427,8 +427,8 @@ describe('SessionImpl - CSRF Protection', () => {
       const session = SessionImpl.createNew<TestSessionData>(adapter as any, optionsWithCsrf);
       session.set('userId', '123');
       await session.save();
-      const sessionCall = adapter.writeCookie.mock.calls.find(call => call[0] === 'session');
-      const csrfCall = adapter.writeCookie.mock.calls.find(call => call[0] === 'CSRF-TOKEN');
+      const sessionCall = adapter.writeCookie.mock.calls.find((call) => call[0] === 'session');
+      const csrfCall = adapter.writeCookie.mock.calls.find((call) => call[0] === 'CSRF-TOKEN');
       expect(sessionCall![2].sameSite).toBe(csrfCall![2].sameSite);
     });
 
@@ -436,8 +436,8 @@ describe('SessionImpl - CSRF Protection', () => {
       const session = SessionImpl.createNew<TestSessionData>(adapter as any, optionsWithCsrf);
       session.set('userId', '123');
       await session.save();
-      const sessionCall = adapter.writeCookie.mock.calls.find(call => call[0] === 'session');
-      const csrfCall = adapter.writeCookie.mock.calls.find(call => call[0] === 'CSRF-TOKEN');
+      const sessionCall = adapter.writeCookie.mock.calls.find((call) => call[0] === 'session');
+      const csrfCall = adapter.writeCookie.mock.calls.find((call) => call[0] === 'CSRF-TOKEN');
       expect(sessionCall![2].secure).toBe(csrfCall![2].secure);
     });
 
@@ -445,8 +445,8 @@ describe('SessionImpl - CSRF Protection', () => {
       const session = SessionImpl.createNew<TestSessionData>(adapter as any, optionsWithCsrf);
       session.set('userId', '123');
       await session.save();
-      const sessionCall = adapter.writeCookie.mock.calls.find(call => call[0] === 'session');
-      const csrfCall = adapter.writeCookie.mock.calls.find(call => call[0] === 'CSRF-TOKEN');
+      const sessionCall = adapter.writeCookie.mock.calls.find((call) => call[0] === 'session');
+      const csrfCall = adapter.writeCookie.mock.calls.find((call) => call[0] === 'CSRF-TOKEN');
       expect(sessionCall![2].path).toBe(csrfCall![2].path);
     });
 
@@ -459,7 +459,7 @@ describe('SessionImpl - CSRF Protection', () => {
       const session = SessionImpl.createNew<TestSessionData>(adapter as any, customOptions);
       session.set('userId', '123');
       await session.save();
-      const csrfCall = adapter.writeCookie.mock.calls.find(call => call[0] === 'CSRF-TOKEN');
+      const csrfCall = adapter.writeCookie.mock.calls.find((call) => call[0] === 'CSRF-TOKEN');
       expect(csrfCall![2].domain).toBe('custom.example.com');
     });
 
@@ -472,8 +472,8 @@ describe('SessionImpl - CSRF Protection', () => {
       const session = SessionImpl.createNew<TestSessionData>(adapter as any, customOptions);
       session.set('userId', '123');
       await session.save();
-      const sessionCall = adapter.writeCookie.mock.calls.find(call => call[0] === 'session');
-      const csrfCall = adapter.writeCookie.mock.calls.find(call => call[0] === 'CSRF-TOKEN');
+      const sessionCall = adapter.writeCookie.mock.calls.find((call) => call[0] === 'session');
+      const csrfCall = adapter.writeCookie.mock.calls.find((call) => call[0] === 'CSRF-TOKEN');
       expect(sessionCall![2].domain).toBe('example.com');
       expect(csrfCall![2].domain).toBe('example.com');
     });

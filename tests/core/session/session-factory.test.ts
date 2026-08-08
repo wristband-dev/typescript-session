@@ -27,7 +27,7 @@ describe('SessionImpl - Factory Methods', () => {
       const session = SessionImpl.createNew<TestSessionData>(adapter as any, mockOptions);
       session.set('userId', '123');
       await session.save();
-      
+
       // Verify options are used (check cookie name and attributes)
       expect(adapter.writeCookie).toHaveBeenCalledWith(
         'session',
@@ -36,7 +36,7 @@ describe('SessionImpl - Factory Methods', () => {
           maxAge: 3600,
           path: '/',
           secure: true,
-          sameSite: 'Lax'
+          sameSite: 'Lax',
         })
       );
     });
@@ -83,11 +83,7 @@ describe('SessionImpl - Factory Methods', () => {
     });
 
     it('should return empty session for corrupted cookie', async () => {
-      const session = await SessionImpl.fromCookie<TestSessionData>(
-        'corrupted!@#$%^&*()',
-        adapter as any,
-        mockOptions
-      );
+      const session = await SessionImpl.fromCookie<TestSessionData>('corrupted!@#$%^&*()', adapter as any, mockOptions);
       expect(session.toJSON()).toEqual({});
     });
 
@@ -109,11 +105,7 @@ describe('SessionImpl - Factory Methods', () => {
 
       // Try to decrypt with new secret first, old secret second
       const newOptions: NormalizedSessionOptions = { ...mockOptions, secrets: [newSecret, oldSecret] };
-      const restoredSession = await SessionImpl.fromCookie<TestSessionData>(
-        encryptedValue,
-        adapter as any,
-        newOptions
-      );
+      const restoredSession = await SessionImpl.fromCookie<TestSessionData>(encryptedValue, adapter as any, newOptions);
 
       // Should successfully decrypt with old secret
       expect(restoredSession.get('userId')).toBe('123');
@@ -168,7 +160,7 @@ describe('SessionImpl - Factory Methods', () => {
       const expiredOptions: NormalizedSessionOptions = { ...mockOptions, maxAge: 0 };
 
       // Wait a tiny bit to ensure TTL validation fails
-      await new Promise(resolve => setTimeout(resolve, 10));
+      await new Promise((resolve) => setTimeout(resolve, 10));
       const restoredSession = await SessionImpl.fromCookie<TestSessionData>(
         encryptedValue,
         adapter as any,
@@ -210,11 +202,7 @@ describe('SessionImpl - Factory Methods', () => {
       const encryptedValue = SessionCrypto.encryptSync(data, mockOptions.secrets as string);
 
       // Create new session from cookie synchronously
-      const restoredSession = SessionImpl.fromCookieSync<TestSessionData>(
-        encryptedValue,
-        adapter as any,
-        mockOptions
-      );
+      const restoredSession = SessionImpl.fromCookieSync<TestSessionData>(encryptedValue, adapter as any, mockOptions);
       expect(restoredSession.get('userId')).toBe('123');
       expect(restoredSession.get('tenantId')).toBe('tenant-456');
     });
@@ -229,11 +217,7 @@ describe('SessionImpl - Factory Methods', () => {
     });
 
     it('should return empty session for corrupted cookie', () => {
-      const session = SessionImpl.fromCookieSync<TestSessionData>(
-        'corrupted!@#$%^&*()',
-        adapter as any,
-        mockOptions
-      );
+      const session = SessionImpl.fromCookieSync<TestSessionData>('corrupted!@#$%^&*()', adapter as any, mockOptions);
       expect(session.toJSON()).toEqual({});
     });
 
@@ -252,11 +236,7 @@ describe('SessionImpl - Factory Methods', () => {
 
       // Try to decrypt with new secret first, old secret second
       const newOptions: NormalizedSessionOptions = { ...mockOptions, secrets: [newSecret, oldSecret] };
-      const restoredSession = SessionImpl.fromCookieSync<TestSessionData>(
-        encryptedValue,
-        adapter as any,
-        newOptions
-      );
+      const restoredSession = SessionImpl.fromCookieSync<TestSessionData>(encryptedValue, adapter as any, newOptions);
 
       // Should successfully decrypt with old secret
       expect(restoredSession.get('userId')).toBe('123');
@@ -265,11 +245,7 @@ describe('SessionImpl - Factory Methods', () => {
     it('should be synchronous (not return a Promise)', () => {
       const data = { userId: '123' };
       const encryptedValue = SessionCrypto.encryptSync(data, mockOptions.secrets as string);
-      const result = SessionImpl.fromCookieSync<TestSessionData>(
-        encryptedValue,
-        adapter as any,
-        mockOptions
-      );
+      const result = SessionImpl.fromCookieSync<TestSessionData>(encryptedValue, adapter as any, mockOptions);
       expect(result).not.toBeInstanceOf(Promise);
       expect(result).toBeInstanceOf(SessionImpl);
     });
@@ -279,14 +255,10 @@ describe('SessionImpl - Factory Methods', () => {
         userId: '123',
         tenantId: 'tenant-456',
         counter: 42,
-        isAuthenticated: true
+        isAuthenticated: true,
       };
       const encryptedValue = SessionCrypto.encryptSync(data, mockOptions.secrets as string);
-      const restoredSession = SessionImpl.fromCookieSync<TestSessionData>(
-        encryptedValue,
-        adapter as any,
-        mockOptions
-      );
+      const restoredSession = SessionImpl.fromCookieSync<TestSessionData>(encryptedValue, adapter as any, mockOptions);
       expect(restoredSession.get('userId')).toBe('123');
       expect(restoredSession.get('tenantId')).toBe('tenant-456');
       expect(restoredSession.get('counter')).toBe(42);
@@ -318,16 +290,8 @@ describe('SessionImpl - Factory Methods', () => {
     it('should produce equivalent results for async and sync', async () => {
       const data = { userId: '123', tenantId: 'tenant-456' };
       const encryptedValue = SessionCrypto.encryptSync(data, mockOptions.secrets as string);
-      const asyncSession = await SessionImpl.fromCookie<TestSessionData>(
-        encryptedValue,
-        adapter as any,
-        mockOptions
-      );
-      const syncSession = SessionImpl.fromCookieSync<TestSessionData>(
-        encryptedValue,
-        adapter as any,
-        mockOptions
-      );
+      const asyncSession = await SessionImpl.fromCookie<TestSessionData>(encryptedValue, adapter as any, mockOptions);
+      const syncSession = SessionImpl.fromCookieSync<TestSessionData>(encryptedValue, adapter as any, mockOptions);
       expect(asyncSession.toJSON()).toEqual(syncSession.toJSON());
       expect(asyncSession.get('userId')).toBe(syncSession.get('userId'));
       expect(asyncSession.get('tenantId')).toBe(syncSession.get('tenantId'));
@@ -335,16 +299,8 @@ describe('SessionImpl - Factory Methods', () => {
 
     it('should handle errors consistently', async () => {
       const invalidCookie = 'invalid-data';
-      const asyncSession = await SessionImpl.fromCookie<TestSessionData>(
-        invalidCookie,
-        adapter as any,
-        mockOptions
-      );
-      const syncSession = SessionImpl.fromCookieSync<TestSessionData>(
-        invalidCookie,
-        adapter as any,
-        mockOptions
-      );
+      const asyncSession = await SessionImpl.fromCookie<TestSessionData>(invalidCookie, adapter as any, mockOptions);
+      const syncSession = SessionImpl.fromCookieSync<TestSessionData>(invalidCookie, adapter as any, mockOptions);
       expect(asyncSession.toJSON()).toEqual({});
       expect(syncSession.toJSON()).toEqual({});
     });
@@ -362,11 +318,7 @@ describe('SessionImpl - Factory Methods', () => {
       const encryptedCookie = adapter.writeCookie.mock.calls[0][1];
 
       // Step 3: Restore session from cookie (simulating new request)
-      const session2 = await SessionImpl.fromCookie<TestSessionData>(
-        encryptedCookie,
-        adapter as any,
-        mockOptions
-      );
+      const session2 = await SessionImpl.fromCookie<TestSessionData>(encryptedCookie, adapter as any, mockOptions);
 
       // Step 4: Verify data is intact
       expect(session2.get('userId')).toBe('123');
@@ -379,11 +331,7 @@ describe('SessionImpl - Factory Methods', () => {
 
       // Step 6: Restore again
       const encryptedCookie2 = adapter.writeCookie.mock.calls[0][1];
-      const session3 = await SessionImpl.fromCookie<TestSessionData>(
-        encryptedCookie2,
-        adapter as any,
-        mockOptions
-      );
+      const session3 = await SessionImpl.fromCookie<TestSessionData>(encryptedCookie2, adapter as any, mockOptions);
 
       // Step 7: Verify all data is intact
       expect(session3.get('userId')).toBe('123');

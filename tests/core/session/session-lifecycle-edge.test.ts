@@ -51,7 +51,7 @@ describe('SessionImpl - Lifecycle (Edge/Web)', () => {
       const session = SessionImpl.createNew<TestSessionData>(adapter as any, mockOptions);
       session.set('userId', '123');
       const originalResponse = new Response('Hello', {
-        headers: { 'Content-Type': 'text/plain', 'X-Custom-Header': 'custom-value' }
+        headers: { 'Content-Type': 'text/plain', 'X-Custom-Header': 'custom-value' },
       });
       const newResponse = await session.saveToResponse(originalResponse);
       expect(newResponse.headers.get('content-type')).toBe('text/plain');
@@ -62,7 +62,7 @@ describe('SessionImpl - Lifecycle (Edge/Web)', () => {
       const session = SessionImpl.createNew<TestSessionData>(adapter as any, mockOptions);
       session.set('userId', '123');
       const originalResponse = new Response('Hello', {
-        headers: { 'Set-Cookie': 'existing=cookie; Path=/' }
+        headers: { 'Set-Cookie': 'existing=cookie; Path=/' },
       });
       const newResponse = await session.saveToResponse(originalResponse);
       const setCookieHeaders = newResponse.headers.get('set-cookie');
@@ -102,7 +102,7 @@ describe('SessionImpl - Lifecycle (Edge/Web)', () => {
       session.destroy();
       const originalResponse = new Response('Hello');
       await expect(session.saveToResponse(originalResponse)).rejects.toThrow(SessionError);
-      
+
       try {
         await session.saveToResponse(originalResponse);
       } catch (error) {
@@ -123,7 +123,7 @@ describe('SessionImpl - Lifecycle (Edge/Web)', () => {
 
       expect(newResponse).toBeInstanceOf(Response);
       expect(newResponse).not.toBe(originalResponse);
-      
+
       const setCookieHeader = newResponse.headers.get('set-cookie');
       expect(setCookieHeader).toBeTruthy();
       expect(setCookieHeader).toContain('session=');
@@ -145,9 +145,9 @@ describe('SessionImpl - Lifecycle (Edge/Web)', () => {
       const session = SessionImpl.createNew<TestSessionData>(adapter as any, mockOptions);
       session.set('userId', '123');
 
-      const originalResponse = new Response('Redirect', { 
+      const originalResponse = new Response('Redirect', {
         status: 302,
-        headers: { 'Location': '/login' }
+        headers: { Location: '/login' },
       });
       const newResponse = session.destroyToResponse(originalResponse);
 
@@ -162,8 +162,8 @@ describe('SessionImpl - Lifecycle (Edge/Web)', () => {
       const originalResponse = new Response('Goodbye', {
         headers: {
           'Content-Type': 'text/plain',
-          'X-Custom-Header': 'custom-value'
-        }
+          'X-Custom-Header': 'custom-value',
+        },
       });
       const newResponse = session.destroyToResponse(originalResponse);
 
@@ -199,7 +199,7 @@ describe('SessionImpl - Lifecycle (Edge/Web)', () => {
       session.destroy();
 
       const originalResponse = new Response('Goodbye');
-      
+
       expect(() => {
         session.destroyToResponse(originalResponse);
       }).not.toThrow();
@@ -215,7 +215,7 @@ describe('SessionImpl - Lifecycle (Edge/Web)', () => {
 
       expect(Array.isArray(cookieData)).toBe(true);
       expect(cookieData.length).toBeGreaterThanOrEqual(1);
-      
+
       const sessionCookie = cookieData[0];
       expect(sessionCookie.name).toBe('session');
       expect(typeof sessionCookie.value).toBe('string');
@@ -257,7 +257,7 @@ describe('SessionImpl - Lifecycle (Edge/Web)', () => {
       session.destroy();
 
       await expect(session.getCookieDataForSave()).rejects.toThrow(SessionError);
-      
+
       try {
         await session.getCookieDataForSave();
       } catch (error) {
@@ -276,7 +276,7 @@ describe('SessionImpl - Lifecycle (Edge/Web)', () => {
 
       expect(Array.isArray(cookieData)).toBe(true);
       expect(cookieData.length).toBeGreaterThanOrEqual(1);
-      
+
       const sessionCookie = cookieData[0];
       expect(sessionCookie.name).toBe('session');
       expect(sessionCookie.value).toBe('');
@@ -326,7 +326,7 @@ describe('SessionImpl - Lifecycle (Edge/Web)', () => {
 
       const response = new Response('Success', {
         status: 200,
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 'Content-Type': 'application/json' },
       });
 
       const finalResponse = await session.saveToResponse(response);
@@ -342,7 +342,7 @@ describe('SessionImpl - Lifecycle (Edge/Web)', () => {
 
       const response = new Response(null, {
         status: 302,
-        headers: { 'Location': '/login' }
+        headers: { Location: '/login' },
       });
 
       const finalResponse = session.destroyToResponse(response);
@@ -361,7 +361,7 @@ describe('SessionImpl - Lifecycle (Edge/Web)', () => {
       const cookieData = await session.getCookieDataForSave();
 
       expect(cookieData.length).toBeGreaterThanOrEqual(1);
-      
+
       // Simulate setting cookies with Next.js cookies() API
       for (const { name, value, options } of cookieData) {
         expect(name).toBeTruthy();

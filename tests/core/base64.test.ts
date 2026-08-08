@@ -30,7 +30,7 @@ describe('Base64', () => {
       const result = Base64.encode(input);
       expect(result).toBeTruthy();
       expect(result.length).toBeGreaterThan(0);
-      
+
       // Verify it's valid base64
       expect(result).toMatch(/^[A-Za-z0-9+/]*={0,2}$/);
     });
@@ -38,8 +38,18 @@ describe('Base64', () => {
     it('should encode UTF-8 byte sequences', () => {
       // UTF-8 encoding of "Hello 世界" manually represented
       const input = new Uint8Array([
-        72, 101, 108, 108, 111, 32, // "Hello "
-        228, 184, 150, 231, 149, 140 // "世界"
+        72,
+        101,
+        108,
+        108,
+        111,
+        32, // "Hello "
+        228,
+        184,
+        150,
+        231,
+        149,
+        140, // "世界"
       ]);
       const result = Base64.encode(input);
       expect(result).toBeTruthy();
@@ -50,7 +60,7 @@ describe('Base64', () => {
       const chunkSize = 0x8000; // 32KB
       const input = new Uint8Array(chunkSize);
       input.fill(65); // Fill with 'A'
-      
+
       const result = Base64.encode(input);
       expect(result).toBeTruthy();
       expect(result.length).toBeGreaterThan(0);
@@ -59,12 +69,12 @@ describe('Base64', () => {
     it('should handle data larger than chunk size', () => {
       const size = 0x8000 + 1000; // 32KB + 1000 bytes
       const input = new Uint8Array(size);
-      
+
       // Fill with pattern to ensure chunks are processed correctly
       for (let i = 0; i < size; i++) {
         input[i] = i % 256;
       }
-      
+
       const result = Base64.encode(input);
       expect(result).toBeTruthy();
       expect(result.length).toBeGreaterThan(0);
@@ -74,7 +84,7 @@ describe('Base64', () => {
       const size = 0x8000 * 3 + 500; // ~96KB
       const input = new Uint8Array(size);
       input.fill(88); // Fill with 'X'
-      
+
       const result = Base64.encode(input);
       expect(result).toBeTruthy();
       expect(result.length).toBeGreaterThan(0);

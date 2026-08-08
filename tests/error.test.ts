@@ -262,11 +262,9 @@ describe('SessionCryptoError', () => {
     });
 
     it('should wrap object cause in Error', () => {
-      const error = new SessionCryptoError(
-        SessionCryptoErrorCode.ENCRYPTION_FAILED,
-        'Failed',
-        { detail: 'Some detail' }
-      );
+      const error = new SessionCryptoError(SessionCryptoErrorCode.ENCRYPTION_FAILED, 'Failed', {
+        detail: 'Some detail',
+      });
       expect(error.cause).toBeInstanceOf(Error);
       expect(error.cause?.message).toContain('object');
     });
@@ -284,7 +282,7 @@ describe('SessionCryptoError', () => {
 
   describe('instanceof checks', () => {
     it('should be instanceof Error', () => {
-      const error = new SessionCryptoError(SessionCryptoErrorCode.DECRYPTION_FAILED,'Failed');
+      const error = new SessionCryptoError(SessionCryptoErrorCode.DECRYPTION_FAILED, 'Failed');
       expect(error instanceof Error).toBe(true);
     });
 

@@ -25,7 +25,7 @@ describe('SessionCrypto - Async Methods', () => {
         userId: '123',
         tenantId: 'tenant-456',
         accessToken: 'token-abc',
-        isAuthenticated: true
+        isAuthenticated: true,
       };
       const encrypted = await SessionCrypto.encrypt(sessionData, validSecret);
       expect(encrypted).toBeDefined();
@@ -51,7 +51,7 @@ describe('SessionCrypto - Async Methods', () => {
       const sessionData = {
         userId: 'user-123',
         tenantId: 'tenant-456',
-        tenantName: 'Test User'
+        tenantName: 'Test User',
       };
       const encrypted = await SessionCrypto.encrypt(sessionData, validSecret);
       expect(encrypted).toBeDefined();
@@ -60,7 +60,7 @@ describe('SessionCrypto - Async Methods', () => {
     it('should handle number values', async () => {
       const sessionData = {
         userId: '123',
-        expiresAt: 1234567890
+        expiresAt: 1234567890,
       };
       const encrypted = await SessionCrypto.encrypt(sessionData, validSecret);
       expect(encrypted).toBeDefined();
@@ -68,7 +68,7 @@ describe('SessionCrypto - Async Methods', () => {
 
     it('should handle boolean values', async () => {
       const sessionData = {
-        isAuthenticated: true
+        isAuthenticated: true,
       };
       const encrypted = await SessionCrypto.encrypt(sessionData, validSecret);
       expect(encrypted).toBeDefined();
@@ -79,8 +79,8 @@ describe('SessionCrypto - Async Methods', () => {
         userId: '123',
         metadata: {
           theme: 'dark',
-          language: 'en'
-        }
+          language: 'en',
+        },
       };
       const encrypted = await SessionCrypto.encrypt(sessionData, validSecret);
       expect(encrypted).toBeDefined();
@@ -89,7 +89,7 @@ describe('SessionCrypto - Async Methods', () => {
     it('should handle arrays', async () => {
       const sessionData: any = {
         userId: '123',
-        roles: ['admin', 'editor', 'viewer']
+        roles: ['admin', 'editor', 'viewer'],
       };
       const encrypted = await SessionCrypto.encrypt(sessionData, validSecret);
       expect(encrypted).toBeDefined();
@@ -98,7 +98,7 @@ describe('SessionCrypto - Async Methods', () => {
     it('should handle null values', async () => {
       const sessionData: any = {
         userId: '123',
-        optionalField: null
+        optionalField: null,
       };
       const encrypted = await SessionCrypto.encrypt(sessionData, validSecret);
       expect(encrypted).toBeDefined();
@@ -107,7 +107,7 @@ describe('SessionCrypto - Async Methods', () => {
     it('should handle special characters in strings', async () => {
       const sessionData = {
         userId: '123',
-        tenantName: 'Test with special chars: !@#$%^&*()_+-={}[]|\\:";\'<>?,./'
+        tenantName: 'Test with special chars: !@#$%^&*()_+-={}[]|\\:";\'<>?,./',
       };
       const encrypted = await SessionCrypto.encrypt(sessionData, validSecret);
       expect(encrypted).toBeDefined();
@@ -116,7 +116,7 @@ describe('SessionCrypto - Async Methods', () => {
     it('should handle unicode characters', async () => {
       const sessionData = {
         userId: '123',
-        tenantName: '日本語 中文 한글 العربية 🎉'
+        tenantName: '日本語 中文 한글 العربية 🎉',
       };
       const encrypted = await SessionCrypto.encrypt(sessionData, validSecret);
       expect(encrypted).toBeDefined();
@@ -132,13 +132,11 @@ describe('SessionCrypto - Async Methods', () => {
       // Create data that will exceed 4KB when encrypted
       const largeData: any = {
         userId: '123',
-        largeField: 'x'.repeat(5000) // 5KB of data
+        largeField: 'x'.repeat(5000), // 5KB of data
       };
 
-      await expect(
-        SessionCrypto.encrypt(largeData, validSecret)
-      ).rejects.toThrow(SessionCryptoError);
-      
+      await expect(SessionCrypto.encrypt(largeData, validSecret)).rejects.toThrow(SessionCryptoError);
+
       try {
         await SessionCrypto.encrypt(largeData, validSecret);
       } catch (error) {
@@ -150,7 +148,7 @@ describe('SessionCrypto - Async Methods', () => {
       // Create data that's large but under the limit
       const moderateData: any = {
         userId: '123',
-        data: 'x'.repeat(2000) // ~2KB
+        data: 'x'.repeat(2000), // ~2KB
       };
       const encrypted = await SessionCrypto.encrypt(moderateData, validSecret);
       expect(encrypted).toBeDefined();
@@ -160,13 +158,11 @@ describe('SessionCrypto - Async Methods', () => {
     it('should throw ENCRYPTION_FAILED for non-JSON-serializable data (BigInt)', async () => {
       const dataWithBigInt: any = {
         userId: '123',
-        bigNumber: BigInt(12345) // BigInt is not JSON-serializable
+        bigNumber: BigInt(12345), // BigInt is not JSON-serializable
       };
-      
-      await expect(
-        SessionCrypto.encrypt(dataWithBigInt, validSecret)
-      ).rejects.toThrow(SessionCryptoError);
-      
+
+      await expect(SessionCrypto.encrypt(dataWithBigInt, validSecret)).rejects.toThrow(SessionCryptoError);
+
       try {
         await SessionCrypto.encrypt(dataWithBigInt, validSecret);
       } catch (error) {
@@ -189,7 +185,7 @@ describe('SessionCrypto - Async Methods', () => {
         userId: '123',
         tenantId: 'tenant-456',
         accessToken: 'token-abc',
-        isAuthenticated: true
+        isAuthenticated: true,
       };
       const encrypted = await SessionCrypto.encrypt(original, validSecret);
       const decrypted = await SessionCrypto.decrypt(encrypted, validSecret, 3600);
@@ -199,11 +195,9 @@ describe('SessionCrypto - Async Methods', () => {
     it('should throw AUTH_FAILED for wrong secret', async () => {
       const original = { userId: '123' };
       const encrypted = await SessionCrypto.encrypt(original, validSecret);
-      
-      await expect(
-        SessionCrypto.decrypt(encrypted, alternateSecret, 3600)
-      ).rejects.toThrow(SessionCryptoError);
-      
+
+      await expect(SessionCrypto.decrypt(encrypted, alternateSecret, 3600)).rejects.toThrow(SessionCryptoError);
+
       try {
         await SessionCrypto.decrypt(encrypted, alternateSecret, 3600);
       } catch (error) {
@@ -214,14 +208,12 @@ describe('SessionCrypto - Async Methods', () => {
     it('should throw AUTH_FAILED for tampered data', async () => {
       const original = { userId: '123' };
       const encrypted = await SessionCrypto.encrypt(original, validSecret);
-      
+
       // Tamper with the end of the data (likely the auth tag or encrypted payload)
       const tampered = encrypted.slice(0, -5) + 'XXXXX';
-      
-      await expect(
-        SessionCrypto.decrypt(tampered, validSecret, 3600)
-      ).rejects.toThrow(SessionCryptoError);
-      
+
+      await expect(SessionCrypto.decrypt(tampered, validSecret, 3600)).rejects.toThrow(SessionCryptoError);
+
       try {
         await SessionCrypto.decrypt(tampered, validSecret, 3600);
       } catch (error) {
@@ -231,11 +223,9 @@ describe('SessionCrypto - Async Methods', () => {
 
     it('should throw AUTH_FAILED for invalid base64', async () => {
       const invalidBase64 = '!!!invalid!!!';
-      
-      await expect(
-        SessionCrypto.decrypt(invalidBase64, validSecret, 3600)
-      ).rejects.toThrow(SessionCryptoError);
-      
+
+      await expect(SessionCrypto.decrypt(invalidBase64, validSecret, 3600)).rejects.toThrow(SessionCryptoError);
+
       try {
         await SessionCrypto.decrypt(invalidBase64, validSecret, 3600);
       } catch (error) {
@@ -248,11 +238,9 @@ describe('SessionCrypto - Async Methods', () => {
       const encrypted = await SessionCrypto.encrypt(original, validSecret);
       // Truncate the encrypted data
       const truncated = encrypted.substring(0, 30);
-      
-      await expect(
-        SessionCrypto.decrypt(truncated, validSecret, 3600)
-      ).rejects.toThrow(SessionCryptoError);
-      
+
+      await expect(SessionCrypto.decrypt(truncated, validSecret, 3600)).rejects.toThrow(SessionCryptoError);
+
       try {
         await SessionCrypto.decrypt(truncated, validSecret, 3600);
       } catch (error) {
@@ -263,11 +251,9 @@ describe('SessionCrypto - Async Methods', () => {
     it('should throw SESSION_TOO_LARGE for cookie exceeding 4KB', async () => {
       // Create a fake encrypted value that's too large
       const tooLarge = 'A'.repeat(50000);
-      
-      await expect(
-        SessionCrypto.decrypt(tooLarge, validSecret, 3600)
-      ).rejects.toThrow(SessionCryptoError);
-      
+
+      await expect(SessionCrypto.decrypt(tooLarge, validSecret, 3600)).rejects.toThrow(SessionCryptoError);
+
       try {
         await SessionCrypto.decrypt(tooLarge, validSecret, 3600);
       } catch (error) {
@@ -281,18 +267,16 @@ describe('SessionCrypto - Async Methods', () => {
       const originalSkew = SessionCryptoClass.TIMESTAMP_SKEW_MS;
       // Temporarily reduce skew tolerance to 0 for testing
       SessionCryptoClass.TIMESTAMP_SKEW_MS = 0;
-      
+
       try {
         const original = { userId: '123' };
         const encrypted = await SessionCrypto.encrypt(original, validSecret);
 
         // Wait 100ms with maxAge of 50ms (0.05 seconds)
-        await new Promise(resolve => setTimeout(resolve, 100));
-        
-        await expect(
-          SessionCrypto.decrypt(encrypted, validSecret, 0.05)
-        ).rejects.toThrow(SessionCryptoError);
-        
+        await new Promise((resolve) => setTimeout(resolve, 100));
+
+        await expect(SessionCrypto.decrypt(encrypted, validSecret, 0.05)).rejects.toThrow(SessionCryptoError);
+
         try {
           await SessionCrypto.decrypt(encrypted, validSecret, 0.05);
         } catch (error) {
@@ -307,7 +291,7 @@ describe('SessionCrypto - Async Methods', () => {
     it('should accept session within maxAge', async () => {
       const original = { userId: '123' };
       const encrypted = await SessionCrypto.encrypt(original, validSecret);
-      
+
       // Decrypt immediately with generous maxAge
       const decrypted = await SessionCrypto.decrypt(encrypted, validSecret, 3600);
       expect(decrypted).toEqual(original);
@@ -316,10 +300,10 @@ describe('SessionCrypto - Async Methods', () => {
     it('should include 60-second clock skew tolerance', async () => {
       const original = { userId: '123' };
       const encrypted = await SessionCrypto.encrypt(original, validSecret);
-      
+
       // Wait 1 second with maxAge of 1 second
       // Should still work due to 60-second skew tolerance
-      await new Promise(resolve => setTimeout(resolve, 1100));
+      await new Promise((resolve) => setTimeout(resolve, 1100));
       const decrypted = await SessionCrypto.decrypt(encrypted, validSecret, 1);
       expect(decrypted).toEqual(original);
     });
@@ -339,14 +323,14 @@ describe('SessionCrypto - Async Methods', () => {
         metadata: {
           preferences: {
             theme: 'dark',
-            notifications: true
+            notifications: true,
           },
-          tags: ['admin', 'premium']
+          tags: ['admin', 'premium'],
         },
         loginHistory: [
           { timestamp: 1234567890, ip: '192.168.1.1' },
-          { timestamp: 1234567900, ip: '192.168.1.2' }
-        ]
+          { timestamp: 1234567900, ip: '192.168.1.2' },
+        ],
       };
       const encrypted = await SessionCrypto.encrypt(original, validSecret);
       const decrypted = await SessionCrypto.decrypt(encrypted, validSecret, 3600);
@@ -360,7 +344,7 @@ describe('SessionCrypto - Async Methods', () => {
         booleanField: true,
         nullField: null,
         arrayField: [1, 2, 3],
-        objectField: { nested: 'value' }
+        objectField: { nested: 'value' },
       };
 
       const encrypted = await SessionCrypto.encrypt(original, validSecret);
@@ -377,7 +361,7 @@ describe('SessionCrypto - Async Methods', () => {
     it('should preserve unicode characters', async () => {
       const original = {
         userId: '123',
-        tenantName: '日本語 中文 한글 العربية 🎉🚀'
+        tenantName: '日本語 中文 한글 العربية 🎉🚀',
       };
       const encrypted = await SessionCrypto.encrypt(original, validSecret);
       const decrypted = await SessionCrypto.decrypt(encrypted, validSecret, 3600);
@@ -388,7 +372,7 @@ describe('SessionCrypto - Async Methods', () => {
     it('should preserve special characters', async () => {
       const original = {
         userId: '123',
-        tenantName: '!@#$%^&*()_+-={}[]|\\:";\'<>?,./'
+        tenantName: '!@#$%^&*()_+-={}[]|\\:";\'<>?,./',
       };
       const encrypted = await SessionCrypto.encrypt(original, validSecret);
       const decrypted = await SessionCrypto.decrypt(encrypted, validSecret, 3600);
@@ -400,11 +384,7 @@ describe('SessionCrypto - Async Methods', () => {
     it('should decrypt with first secret', async () => {
       const original = { userId: '123' };
       const encrypted = await SessionCrypto.encrypt(original, validSecret);
-      const decrypted = await SessionCrypto.decryptWithSecrets(
-        encrypted,
-        [validSecret, alternateSecret],
-        3600
-      );
+      const decrypted = await SessionCrypto.decryptWithSecrets(encrypted, [validSecret, alternateSecret], 3600);
       expect(decrypted).toEqual(original);
     });
 
@@ -436,20 +416,12 @@ describe('SessionCrypto - Async Methods', () => {
       const original = { userId: '123' };
       const encrypted = await SessionCrypto.encrypt(original, wrongSecret);
 
-      await expect(
-        SessionCrypto.decryptWithSecrets(
-          encrypted,
-          [validSecret, alternateSecret],
-          3600
-        )
-      ).rejects.toThrow(SessionCryptoError);
+      await expect(SessionCrypto.decryptWithSecrets(encrypted, [validSecret, alternateSecret], 3600)).rejects.toThrow(
+        SessionCryptoError
+      );
 
       try {
-        await SessionCrypto.decryptWithSecrets(
-          encrypted,
-          [validSecret, alternateSecret],
-          3600
-        );
+        await SessionCrypto.decryptWithSecrets(encrypted, [validSecret, alternateSecret], 3600);
       } catch (error) {
         expect((error as SessionCryptoError).code).toBe(SessionCryptoErrorCode.DECRYPTION_FAILED);
       }
@@ -458,11 +430,7 @@ describe('SessionCrypto - Async Methods', () => {
     it('should work with single secret in array', async () => {
       const original = { userId: '123' };
       const encrypted = await SessionCrypto.encrypt(original, validSecret);
-      const decrypted = await SessionCrypto.decryptWithSecrets(
-        encrypted,
-        [validSecret],
-        3600
-      );
+      const decrypted = await SessionCrypto.decryptWithSecrets(encrypted, [validSecret], 3600);
       expect(decrypted).toEqual(original);
     });
 
@@ -470,7 +438,7 @@ describe('SessionCrypto - Async Methods', () => {
       // This is more of a documentation test - order matters for performance
       const original = { userId: '123' };
       const encrypted = await SessionCrypto.encrypt(original, alternateSecret);
-      
+
       // Should succeed faster if correct secret is first
       const decrypted = await SessionCrypto.decryptWithSecrets(
         encrypted,
@@ -493,16 +461,14 @@ describe('SessionCrypto - Async Methods', () => {
     it('should throw UNSUPPORTED_VERSION for wrong version', async () => {
       const original = { userId: '123' };
       const encrypted = await SessionCrypto.encrypt(original, validSecret);
-      
+
       // Decode, change version byte, re-encode
       const bytes = Buffer.from(encrypted, 'base64');
       bytes[0] = 99; // Invalid version
       const modifiedEncrypted = bytes.toString('base64');
-      
-      await expect(
-        SessionCrypto.decrypt(modifiedEncrypted, validSecret, 3600)
-      ).rejects.toThrow(SessionCryptoError);
-      
+
+      await expect(SessionCrypto.decrypt(modifiedEncrypted, validSecret, 3600)).rejects.toThrow(SessionCryptoError);
+
       try {
         await SessionCrypto.decrypt(modifiedEncrypted, validSecret, 3600);
       } catch (error) {
@@ -517,15 +483,15 @@ describe('SessionCrypto - Async Methods', () => {
       const originalSubtle = globalThis.crypto.subtle;
       const mockSubtle = {
         ...originalSubtle,
-        deriveKey: jest.fn().mockRejectedValue(new Error('Algorithm not supported'))
+        deriveKey: jest.fn().mockRejectedValue(new Error('Algorithm not supported')),
       };
-      
+
       Object.defineProperty(globalThis.crypto, 'subtle', {
         value: mockSubtle,
         writable: true,
-        configurable: true
+        configurable: true,
       });
-      
+
       try {
         await SessionCrypto.encrypt({ userId: '123' }, validSecret);
         fail('Should have thrown');
@@ -537,7 +503,7 @@ describe('SessionCrypto - Async Methods', () => {
         Object.defineProperty(globalThis.crypto, 'subtle', {
           value: originalSubtle,
           writable: true,
-          configurable: true
+          configurable: true,
         });
       }
     });
@@ -548,15 +514,15 @@ describe('SessionCrypto - Async Methods', () => {
         ...originalSubtle,
         importKey: originalSubtle.importKey.bind(originalSubtle),
         deriveKey: originalSubtle.deriveKey.bind(originalSubtle),
-        encrypt: jest.fn().mockRejectedValue(new Error('Encryption operation failed'))
+        encrypt: jest.fn().mockRejectedValue(new Error('Encryption operation failed')),
       };
-      
+
       Object.defineProperty(globalThis.crypto, 'subtle', {
         value: mockSubtle,
         writable: true,
-        configurable: true
+        configurable: true,
       });
-      
+
       try {
         await SessionCrypto.encrypt({ userId: '123' }, validSecret);
         fail('Should have thrown');
@@ -568,7 +534,7 @@ describe('SessionCrypto - Async Methods', () => {
         Object.defineProperty(globalThis.crypto, 'subtle', {
           value: originalSubtle,
           writable: true,
-          configurable: true
+          configurable: true,
         });
       }
     });
