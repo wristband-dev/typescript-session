@@ -1,6 +1,6 @@
 /**
  * Error codes for Session operations.
- * 
+ *
  * Provides structured identifiers for different types of session failures
  * without exposing internal implementation details.
  */
@@ -10,17 +10,17 @@ export enum SessionErrorCode {
   SESSION_DESTROYED = 'SESSION_DESTROYED',
   /** Failed to save session (encryption, serialization, or cookie write failed) */
   SESSION_SAVE_FAILED = 'SESSION_SAVE_FAILED',
-  
+
   // --- Configuration errors ---
   /** Invalid session configuration provided */
   INVALID_CONFIGURATION = 'INVALID_CONFIGURATION',
   /** Response object not available for cookie operations */
   MISSING_RESPONSE = 'MISSING_RESPONSE',
-  
+
   // --- Deferred mode errors ---
   /** Attempted to flush when deferred mode is not enabled */
   DEFERRED_MODE_NOT_ENABLED = 'DEFERRED_MODE_NOT_ENABLED',
-  
+
   // --- Wristband-specific errors ---
   /** Invalid or missing callback data from Wristband authentication */
   CALLBACK_DATA_INVALID = 'CALLBACK_DATA_INVALID',
@@ -32,10 +32,10 @@ export enum SessionErrorCode {
 
 /**
  * Error class for all session-related operations.
- * 
+ *
  * Wraps internal errors (like SessionCryptoError) to provide a clean public API
  * while preserving debugging information through the error cause chain.
- * 
+ *
  * @example
  * ```typescript
  * try {
@@ -44,7 +44,7 @@ export enum SessionErrorCode {
  *   if (error instanceof SessionError) {
  *     console.error('Session error:', error.code);
  *     console.error('Message:', error.message);
- *     
+ *
  *     // For debugging, inspect the underlying cause
  *     if (error.cause) {
  *       console.error('Caused by:', error.cause);
@@ -59,7 +59,7 @@ export class SessionError extends Error {
 
   /**
    * Create a new SessionError.
-   * 
+   *
    * @param code - The error code identifying the failure type
    * @param message - Human-readable error message
    * @param cause - Optional underlying error for debugging
@@ -82,9 +82,9 @@ export class SessionError extends Error {
   /**
    * Returns a JSON-serializable representation of the error. The cause is omitted deliberately
    * to avoid leaking internal details.
-   * 
+   *
    * @returns Object containing error code and message (excludes cause for security)
-   * 
+   *
    * @example
    * ```typescript
    * catch (error) {
@@ -102,7 +102,7 @@ export class SessionError extends Error {
 
 /**
  * Error codes for SessionCrypto operations.
- * 
+ *
  * Provides structured identifiers for cryptographic failures without
  * exposing sensitive internal implementation details.
  */
@@ -142,13 +142,13 @@ export enum SessionCryptoErrorCode {
 
 /**
  * Error class for cryptographic operations.
- * 
+ *
  * Internal error type used by SessionCrypto for encryption/decryption failures.
  * These errors are typically wrapped in SessionError before being exposed to users,
  * but can be inspected via the error cause chain for debugging.
- * 
+ *
  * @internal
- * 
+ *
  * @example
  * ```typescript
  * try {
@@ -169,7 +169,7 @@ export class SessionCryptoError extends Error {
 
   /**
    * Create a new SessionCryptoError.
-   * 
+   *
    * @param code - The error code identifying the failure type
    * @param message - Human-readable error message (defaults to code if not provided)
    * @param cause - Optional underlying error for debugging

@@ -23,11 +23,11 @@ if (!webCrypto?.subtle) {
 
 /**
  * Cryptographic utilities for secure session cookie encryption and decryption.
- * 
+ *
  * Provides both asynchronous (Web Crypto API) and synchronous (Node.js crypto) methods
  * for encrypting session data into tamper-proof, time-limited cookies. Uses AES-256-GCM
  * authenticated encryption with HKDF key derivation for maximum security.
- * 
+ *
  * @remarks
  * **Security Features:**
  * - AES-256-GCM authenticated encryption (confidentiality + integrity in one operation)
@@ -36,38 +36,38 @@ if (!webCrypto?.subtle) {
  * - 128-bit authentication tag for tamper detection
  * - Timestamp-based TTL validation with clock skew tolerance
  * - Support for zero-downtime secret rotation
- * 
+ *
  * **Cross-Platform Compatibility:**
  * - Async methods: Node.js 20+, Deno, Bun, Cloudflare Workers, browsers
  * - Sync methods: Node.js only (uses native crypto module)
  * - Binary format is identical across all platforms for seamless interoperability
- * 
+ *
  * **Binary Cookie Format:**
  * ```
  * [version:1][timestamp:8][iv:12][encrypted_data + auth_tag:variable]
  * ```
  * All values are base64-encoded for safe cookie storage.
- * 
+ *
  * @example
  * ```typescript
  * // Async encryption (works everywhere)
  * const sessionData = { userId: '123', role: 'admin' };
  * const encrypted = await SessionCrypto.encrypt(sessionData, secret);
- * 
+ *
  * // Async decryption with TTL validation (1 hour)
  * const decrypted = await SessionCrypto.decrypt(encrypted, secret, 3600000);
- * 
+ *
  * // Sync encryption (Node.js only, for middleware)
  * const encrypted = SessionCrypto.encryptSync(sessionData, secret);
- * 
+ *
  * // Secret rotation support
  * const decrypted = await SessionCrypto.decryptWithSecrets(
- *   encrypted, 
- *   [newSecret, oldSecret], 
+ *   encrypted,
+ *   [newSecret, oldSecret],
  *   3600000
  * );
  * ```
- * 
+ *
  * @see {@link https://tools.ietf.org/html/rfc5869 | RFC 5869 - HKDF}
  * @see {@link https://nvlpubs.nist.gov/nistpubs/Legacy/SP/nistspecialpublication800-38d.pdf | NIST SP 800-38D - GCM}
  */
@@ -97,28 +97,28 @@ export class SessionCrypto {
 
   /**
    * Derive a CryptoKey from a secret string using HKDF-SHA256.
-   * 
+   *
    * HKDF (HMAC-based Key Derivation Function, RFC 5869) is the standard approach
    * for deriving cryptographic keys from high-entropy secrets. While HMAC-SHA256
    * alone would be functionally secure for this purpose, HKDF provides:
-   * 
+   *
    * 1. **Standardization** - RFC 5869 is the accepted standard for key derivation
    * 2. **Clear semantics** - Explicitly designed for key derivation, not message authentication
    * 3. **Domain separation** - The `info` parameter prevents derived keys from being
    *    reused across different contexts (e.g., encryption vs signing)
    * 4. **Future-proofing** - Easy to derive multiple independent keys from one secret
-   * 
+   *
    * For session cookies with 32+ character secrets, the security difference between
    * HKDF and raw HMAC is negligible, but HKDF is considered best practice.
-   * 
+   *
    * Note: We use a single derived key with AES-GCM (authenticated encryption), which
    * handles both confidentiality and integrity in one operation. No separate MAC key
    * is needed, unlike older approaches (AES-CBC + HMAC) which require two keys.
-   * 
+   *
    * @param secret - High-entropy secret (min 32 chars, validated elsewhere)
    * @returns CryptoKey suitable for AES-GCM encryption/decryption
    * @throws {SessionCryptoError} If key derivation fails.
-   * 
+   *
    * @see https://tools.ietf.org/html/rfc5869 - HKDF specification
    */
   private static async deriveKey(secret: string): Promise<CryptoKey> {
@@ -128,11 +128,11 @@ export class SessionCrypto {
       // Import secret as HKDF base key
       const secretBytes = this.encoder.encode(secret);
       const baseKey = await webCrypto.subtle.importKey('raw', secretBytes, 'HKDF', false, ['deriveKey']);
-      
+
       // Use HKDF to derive AES-GCM key
       const salt = this.encoder.encode(this.SALT);
       const info = this.encoder.encode(this.INFO);
-      
+
       return webCrypto.subtle.deriveKey(
         { name: 'HKDF', hash: 'SHA-256', salt, info },
         baseKey,
@@ -143,32 +143,32 @@ export class SessionCrypto {
     } catch (error) {
       throw new SessionCryptoError(
         SessionCryptoErrorCode.ENCRYPTION_FAILED,
-        'Failed to derive encryption key from secret',
+        'Failed to derive encryption key from secret'
       );
     }
   }
 
   /**
    * Asynchronously encrypt session data into a secure, base64-encoded cookie value.
-   * 
+   *
    * Uses AES-256-GCM authenticated encryption with a randomly generated IV for each
    * encryption operation. The resulting cookie includes version metadata, encryption
    * timestamp, IV, and encrypted data with authentication tag.
-   * 
-   * This method works across all JavaScript environments (Node.js, Deno, Bun, 
+   *
+   * This method works across all JavaScript environments (Node.js, Deno, Bun,
    * Cloudflare Workers, browsers) using the Web Crypto API.
-   * 
+   *
    * @param data - Session data object to encrypt (will be JSON-serialized)
    * @param secret - High-entropy secret string (minimum 32 characters recommended)
    * @returns Promise resolving to base64-encoded encrypted cookie string
    * @throws {SessionCryptoError} If encryption fails or Web Crypto API is unavailable
-   * 
+   *
    * @remarks
    * - Generates a fresh random 96-bit IV for each encryption (never reuses IVs)
    * - Embeds current timestamp for TTL validation during decryption
    * - Output is safe for HTTP cookie storage (base64-encoded, no special characters)
    * - Maximum practical size is ~2.7KB of session data (4KB cookie limit minus overhead)
-   * 
+   *
    * @example
    * ```typescript
    * const session = { userId: '123', roles: ['admin'], loginTime: Date.now() };
@@ -176,7 +176,7 @@ export class SessionCrypto {
    * const encryptedCookie = await SessionCrypto.encrypt(session, secret);
    * // Returns: "AQABkx7f2g...base64..." (ready for Set-Cookie header)
    * ```
-   * 
+   *
    * @see {@link decrypt} for decryption and TTL validation
    * @see {@link encryptSync} for synchronous Node.js version
    */
@@ -187,7 +187,7 @@ export class SessionCrypto {
     try {
       const key = await this.deriveKey(secret);
       const iv = webCrypto.getRandomValues(new Uint8Array(12));
-      
+
       let dataBytes;
       try {
         dataBytes = this.encoder.encode(JSON.stringify(data));
@@ -203,7 +203,7 @@ export class SessionCrypto {
           `Session data too large: ${dataBytes.length} bytes`
         );
       }
-      
+
       const encrypted = await webCrypto.subtle.encrypt(
         { name: this.ALGORITHM, iv, tagLength: 128 },
         key,
@@ -214,7 +214,7 @@ export class SessionCrypto {
       // Note: Web Crypto API automatically appends the 16-byte GCM auth tag to encrypted data
       const timestamp = new Uint8Array(8);
       new DataView(timestamp.buffer).setBigUint64(0, BigInt(Date.now()), false);
-      
+
       const combined = new Uint8Array(1 + 8 + 12 + encrypted.byteLength);
       combined[0] = this.VERSION;
       combined.set(timestamp, 1);
@@ -243,13 +243,13 @@ export class SessionCrypto {
 
   /**
    * Asynchronously decrypt and validate an encrypted session cookie.
-   * 
+   *
    * Decrypts a base64-encoded session cookie, validates its authentication tag to
    * ensure integrity, and checks that the session has not expired based on the
    * embedded timestamp and provided maxAge parameter.
-   * 
+   *
    * This method works across all JavaScript environments using the Web Crypto API.
-   * 
+   *
    * @param encryptedValue - Base64-encoded encrypted cookie string (from {@link encrypt})
    * @param secret - Secret string used during encryption (must match)
    * @param maxAge - Maximum session age in seconds (e.g., 3600 for 1 hour)
@@ -262,19 +262,19 @@ export class SessionCrypto {
    * - Session expired (timestamp exceeds maxAge + clock skew tolerance)
    * - Authentication tag verification failed (tampered data)
    * - Wrong secret provided
-   * 
+   *
    * @remarks
    * - Includes 60-second clock skew tolerance to handle server time differences
    * - Constant-time operations prevent timing attacks
    * - Any tampering with the cookie causes authentication failure
    * - Failed decryption throws a generic error to avoid leaking information
-   * 
+   *
    * @example
    * ```typescript
    * const encryptedCookie = req.cookies.session;
    * const secret = process.env.SESSION_SECRET;
    * const maxAge = 24 * 60 * 60; // 24 hours
-   * 
+   *
    * try {
    *   const session = await SessionCrypto.decrypt(encryptedCookie, secret, maxAge);
    *   console.log('User ID:', session.userId);
@@ -283,7 +283,7 @@ export class SessionCrypto {
    *   res.redirect('/login');
    * }
    * ```
-   * 
+   *
    * @see {@link encrypt} for encryption
    * @see {@link decryptWithSecrets} for secret rotation support
    * @see {@link decryptSync} for synchronous Node.js version
@@ -331,7 +331,7 @@ export class SessionCrypto {
       const iv = bytes.slice(9, 21);
       const encryptedData = bytes.slice(21);
       const key = await this.deriveKey(secret);
-      
+
       const decrypted = await webCrypto.subtle.decrypt(
         { name: this.ALGORITHM, iv, tagLength: 128 },
         key,
@@ -351,33 +351,33 @@ export class SessionCrypto {
 
   /**
    * Attempt to decrypt a session cookie using multiple secrets for zero-downtime rotation.
-   * 
+   *
    * Tries each secret in order until one successfully decrypts and validates the session.
    * This enables seamless secret rotation by accepting both new and old secrets during
    * a transition period.
-   * 
+   *
    * TTL validation is performed during each decryption attempt.
-   * 
+   *
    * @param encryptedValue - Base64-encoded encrypted cookie string
    * @param secrets - Array of secret strings to try (typically [newSecret, oldSecret])
    * @param maxAge - Maximum session age in seconds
-   * 
+   *
    * @returns Promise resolving to decrypted SessionData object
-   * 
+   *
    * @throws {Error} If decryption fails with all provided secrets
-   * 
+   *
    * @remarks
    * - Secrets are tried in array order (put most recent first for performance)
    * - Stops immediately on first successful decryption
    * - Failed attempts are silent - only throws if all secrets fail
    * - Useful for gradual secret rotation without user disruption
-   * 
+   *
    * @example
    * ```typescript
    * // During secret rotation period
    * const NEW_SECRET = process.env.NEW_SESSION_SECRET;
    * const OLD_SECRET = process.env.OLD_SESSION_SECRET;
-   * 
+   *
    * try {
    *   // Try new secret first, fall back to old secret
    *   const session = await SessionCrypto.decryptWithSecrets(
@@ -385,7 +385,7 @@ export class SessionCrypto {
    *     [NEW_SECRET, OLD_SECRET],
    *     3600000
    *   );
-   *   
+   *
    *   // Re-encrypt with new secret to migrate session
    *   const newCookie = await SessionCrypto.encrypt(session, NEW_SECRET);
    *   res.cookie('session', newCookie);
@@ -394,7 +394,7 @@ export class SessionCrypto {
    *   res.redirect('/login');
    * }
    * ```
-   * 
+   *
    * @see {@link decrypt} for single-secret decryption
    * @see {@link decryptWithSecretsSync} for synchronous Node.js version
    * @throws {SessionCryptoError} If decryption fails for all provided secrets.
@@ -414,7 +414,7 @@ export class SessionCrypto {
     }
 
     throw new SessionCryptoError(
-      SessionCryptoErrorCode.DECRYPTION_FAILED, 
+      SessionCryptoErrorCode.DECRYPTION_FAILED,
       'Failed to decrypt with provided secrets',
       lastError
     );
@@ -422,47 +422,47 @@ export class SessionCrypto {
 
   /**
    * Synchronously encrypt session data using Node.js native crypto module.
-   * 
+   *
    * Provides identical functionality to {@link encrypt} but operates synchronously,
    * making it suitable for use in synchronous middleware contexts where async operations
    * are problematic. Uses Node.js's native crypto module with the same cryptographic
    * parameters as the async version.
-   * 
+   *
    * ⚠️ **Node.js Only** - This method is only available in Node.js environments.
    * For Edge, Cloudflare Workers, Deno, Bun, or browsers, use {@link encrypt} instead.
-   * 
+   *
    * Binary format is identical to async version, ensuring full cross-compatibility.
    * Sessions encrypted with this method can be decrypted with {@link decrypt} and vice versa.
-   * 
+   *
    * @param data - Session data object to encrypt (will be JSON-serialized)
    * @param secret - High-entropy secret string (minimum 32 characters recommended)
-   * 
+   *
    * @returns Base64-encoded encrypted cookie string
-   * 
+   *
    * @throws {Error} If:
    * - Called in non-Node.js environment (no node:crypto module)
    * - Encryption operation fails
    * - Invalid input data or secret
-   * 
+   *
    * @remarks
    * - Uses identical binary format to {@link encrypt}: `[version][timestamp][iv][data+tag]`
    * - Generates fresh random 96-bit IV per encryption
    * - Embeds current timestamp for TTL validation
    * - Output is cross-compatible with async methods
-   * 
+   *
    * @example
    * ```typescript
    * // In Node.js middleware (synchronous context)
    * function sessionMiddleware(req, res, next) {
    *   const session = { userId: req.user.id, role: req.user.role };
    *   const secret = process.env.SESSION_SECRET;
-   *   
+   *
    *   try {
    *     const encryptedCookie = SessionCrypto.encryptSync(session, secret);
-   *     res.cookie('session', encryptedCookie, { 
-   *       httpOnly: true, 
+   *     res.cookie('session', encryptedCookie, {
+   *       httpOnly: true,
    *       secure: true,
-   *       maxAge: 3600 
+   *       maxAge: 3600
    *     });
    *     next();
    *   } catch (err) {
@@ -470,7 +470,7 @@ export class SessionCrypto {
    *   }
    * }
    * ```
-   * 
+   *
    * @see {@link encrypt} for asynchronous cross-platform version
    * @see {@link decryptSync} for synchronous decryption
    */
@@ -515,12 +515,7 @@ export class SessionCrypto {
       // Create compact binary format: [version(1)][timestamp(8)][iv(12)][encrypted data + tag(16)]
       const timestamp = Buffer.allocUnsafe(8);
       timestamp.writeBigUInt64BE(BigInt(Date.now()));
-      const combined = Buffer.concat([
-        Buffer.from([this.VERSION]),
-        timestamp,
-        iv,
-        encryptedWithTag
-      ]);
+      const combined = Buffer.concat([Buffer.from([this.VERSION]), timestamp, iv, encryptedWithTag]);
 
       // Convert to base64 (matching async version)
       const encodedValue = Base64.encode(new Uint8Array(combined));
@@ -544,33 +539,33 @@ export class SessionCrypto {
 
   /**
    * Synchronously decrypt and validate an encrypted session cookie using Node.js crypto.
-   * 
+   *
    * Provides identical functionality to {@link decrypt} but operates synchronously using
    * Node.js's native crypto module. Suitable for synchronous middleware contexts.
-   * 
+   *
    * ⚠️ **Node.js Only** - This method is only available in Node.js environments.
    * For Edge, Cloudflare Workers, Deno, Bun, or browsers, use {@link decrypt} instead.
-   * 
+   *
    * Binary format is identical to async version, ensuring full cross-compatibility.
    * Can decrypt sessions created by {@link encrypt} or {@link encryptSync}.
-   * 
+   *
    * @param encryptedValue - Base64-encoded encrypted cookie string
    * @param secret - Secret string used during encryption (must match)
    * @param maxAge - Maximum session age in seconds (e.g., 3600 for 1 hour)
-   * 
+   *
    * @returns Decrypted SessionData object
-   * 
+   *
    * @throws {Error} If:
    * - Called in non-Node.js environment (no node:crypto module)
    * - Decryption or validation fails (see {@link decrypt} for detailed failure modes)
    * - Session expired, tampered, or encrypted with different secret
-   * 
+   *
    * @remarks
    * - Compatible with cookies encrypted by {@link encrypt} (cross-platform support)
    * - Includes 60-second clock skew tolerance
    * - Validates authentication tag to detect tampering
    * - Generic error messages prevent information leakage
-   * 
+   *
    * @example
    * ```typescript
    * // In Node.js middleware (synchronous context)
@@ -578,11 +573,11 @@ export class SessionCrypto {
    *   const encryptedCookie = req.cookies.session;
    *   const secret = process.env.SESSION_SECRET;
    *   const maxAge = 24 * 60 * 60; // 24 hours
-   *   
+   *
    *   if (!encryptedCookie) {
    *     return res.redirect('/login');
    *   }
-   *   
+   *
    *   try {
    *     req.session = SessionCrypto.decryptSync(encryptedCookie, secret, maxAge);
    *     next();
@@ -593,7 +588,7 @@ export class SessionCrypto {
    *   }
    * }
    * ```
-   * 
+   *
    * @see {@link decrypt} for asynchronous cross-platform version
    * @see {@link encryptSync} for synchronous encryption
    * @see {@link decryptWithSecretsSync} for secret rotation support
@@ -613,13 +608,10 @@ export class SessionCrypto {
     try {
       // Decode base64 (matching async version)
       const bytes = Buffer.from(Base64.decode(encryptedValue));
-      
+
       // Validate size
       if (bytes.length > this.MAX_SESSION_SIZE_BYTES) {
-        throw new SessionCryptoError(
-          SessionCryptoErrorCode.SESSION_TOO_LARGE,
-          'Session cookie exceeds 4KB limit'
-        );
+        throw new SessionCryptoError(SessionCryptoErrorCode.SESSION_TOO_LARGE, 'Session cookie exceeds 4KB limit');
       }
       if (bytes.length < this.MIN_SESSION_SIZE_BYTES) {
         throw new SessionCryptoError(
@@ -627,7 +619,7 @@ export class SessionCrypto {
           'Session cookie is malformed (too small)'
         );
       }
-      
+
       // Check version
       const version = bytes[0];
       if (version !== this.VERSION) {
@@ -636,7 +628,7 @@ export class SessionCrypto {
           `Unsupported session version: ${version}`
         );
       }
-      
+
       // Validate timestamp
       const timestamp = bytes.readBigUInt64BE(1);
       const maxAgeMs = maxAge * 1000;
@@ -658,24 +650,18 @@ export class SessionCrypto {
 
       const encryptedData = encryptedDataWithTag.subarray(0, -16);
       const authTag = encryptedDataWithTag.subarray(-16);
-      
+
       // Derive key
-      const key = nodeCrypto.hkdfSync(
-        'sha256',
-        secret,
-        Buffer.from(this.SALT),
-        Buffer.from(this.INFO),
-        32
-      );
+      const key = nodeCrypto.hkdfSync('sha256', secret, Buffer.from(this.SALT), Buffer.from(this.INFO), 32);
       const keyBuffer = Buffer.from(key);
-      
+
       // Decrypt
       const decipher = nodeCrypto.createDecipheriv('aes-256-gcm', keyBuffer, iv);
       decipher.setAuthTag(authTag);
-      
+
       let decrypted: string = decipher.update(encryptedData, undefined, 'utf8');
       decrypted += decipher.final('utf8');
-      
+
       return JSON.parse(decrypted) as SessionData;
     } catch (error) {
       if (error instanceof SessionCryptoError) {
@@ -687,26 +673,26 @@ export class SessionCrypto {
 
   /**
    * Synchronously attempt decryption using multiple secrets for zero-downtime rotation.
-   * 
+   *
    * Synchronous version of {@link decryptWithSecrets}. Tries each secret in order until
    * one successfully decrypts and validates the session. Uses Node.js native crypto module.
-   * 
+   *
    * ⚠️ **Node.js Only** - This method is only available in Node.js environments.
-   * 
+   *
    * @param encryptedValue - Base64-encoded encrypted cookie string
    * @param secrets - Array of secret strings to try (typically [newSecret, oldSecret])
    * @param maxAge - Maximum session age in seconds
-   * 
+   *
    * @returns Decrypted SessionData object
-   * 
+   *
    * @throws {Error} If decryption fails with all provided secrets or if called in non-Node.js environment
-   * 
+   *
    * @remarks
    * - Secrets are tried in array order (put most recent first for best performance)
    * - Stops immediately on first successful decryption
    * - Failed attempts are silent - only throws if all secrets fail
    * - Enables gradual secret rotation without service disruption
-   * 
+   *
    * @example
    * ```typescript
    * // In Node.js middleware during secret rotation
@@ -714,18 +700,18 @@ export class SessionCrypto {
    *   const encryptedCookie = req.cookies.session;
    *   const NEW_SECRET = process.env.NEW_SESSION_SECRET;
    *   const OLD_SECRET = process.env.OLD_SESSION_SECRET;
-   *   
+   *
    *   try {
    *     const session = SessionCrypto.decryptWithSecretsSync(
    *       encryptedCookie,
    *       [NEW_SECRET, OLD_SECRET],
    *       3600000
    *     );
-   *     
+   *
    *     // Optionally re-encrypt with new secret to migrate session
    *     const newCookie = SessionCrypto.encryptSync(session, NEW_SECRET);
    *     res.cookie('session', newCookie, { httpOnly: true });
-   *     
+   *
    *     req.session = session;
    *     next();
    *   } catch (err) {
@@ -733,7 +719,7 @@ export class SessionCrypto {
    *   }
    * }
    * ```
-   * 
+   *
    * @see {@link decryptWithSecrets} for asynchronous cross-platform version
    * @see {@link decryptSync} for single-secret synchronous decryption
    * @throws {SessionCryptoError} If decryption fails for all provided secrets.
@@ -753,7 +739,7 @@ export class SessionCrypto {
     }
 
     throw new SessionCryptoError(
-      SessionCryptoErrorCode.DECRYPTION_FAILED, 
+      SessionCryptoErrorCode.DECRYPTION_FAILED,
       'Failed to decrypt with provided secrets',
       lastError
     );
@@ -761,7 +747,7 @@ export class SessionCrypto {
 
   /**
    * Validates a list of secrets used for encryption.
-   * 
+   *
    * Ensures the input is an array containing between 1 and 3 non-empty string values.
    * Each secret should later be individually validated with {@link validateSecret}.
    *
@@ -782,7 +768,7 @@ export class SessionCrypto {
 
   /**
    * Validates a single secret string for strength and format.
-   * 
+   *
    * Ensures the secret is a non-empty string of sufficient length for secure usage.
    *
    * @param {string} secret - The secret string to validate.
@@ -802,7 +788,7 @@ export class SessionCrypto {
 
   /**
    * Validates the maximum age value for token or session expiration.
-   * 
+   *
    * Ensures the value is a positive number greater than zero.
    *
    * @param {number} maxAge - The maximum age (in seconds or milliseconds, depending on context).
@@ -828,7 +814,7 @@ export class SessionCrypto {
 
   /**
    * Validates an encrypted cookie value before attempting decryption.
-   * 
+   *
    * Ensures the value is a non-empty string suitable for decoding.
    *
    * @param {string} encryptedValue - The encrypted cookie string to validate.

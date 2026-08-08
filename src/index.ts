@@ -10,5 +10,5 @@ export type {
   SessionResponse,
   TokenResponse,
   UserInfo,
-  UserInfoRole
+  UserInfoRole,
 } from './types';

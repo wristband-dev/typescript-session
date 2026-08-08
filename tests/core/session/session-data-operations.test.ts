@@ -20,7 +20,7 @@ describe('SessionImpl - Data Operations', () => {
       session.set('userId' as any, null);
       expect(session.get('userId')).toBeNull();
     });
-    
+
     it('should retrieve a value that was set', () => {
       const session = SessionImpl.createNew<TestSessionData>(adapter as any, mockOptions);
       session.set('userId', '123');
@@ -121,11 +121,11 @@ describe('SessionImpl - Data Operations', () => {
     it('should throw error when session is destroyed', () => {
       const session = SessionImpl.createNew<TestSessionData>(adapter as any, mockOptions);
       session.destroy();
-      
+
       expect(() => {
         session.set('userId', '123');
       }).toThrow(SessionError);
-      
+
       try {
         session.set('userId', '123');
       } catch (error) {
@@ -199,11 +199,11 @@ describe('SessionImpl - Data Operations', () => {
       const session = SessionImpl.createNew<TestSessionData>(adapter as any, mockOptions);
       session.set('userId', '123');
       session.destroy();
-      
+
       expect(() => {
         session.delete('userId');
       }).toThrow(SessionError);
-      
+
       try {
         session.delete('userId');
       } catch (error) {
@@ -237,7 +237,7 @@ describe('SessionImpl - Data Operations', () => {
       const json = session.toJSON();
       expect(json).toEqual({
         userId: '123',
-        preferences: { theme: 'dark' }
+        preferences: { theme: 'dark' },
       });
     });
 
@@ -359,7 +359,7 @@ describe('SessionImpl - Data Operations', () => {
       expect(inspectResult).toEqual({
         userId: '123',
         tenantId: 'tenant-456',
-        counter: 42
+        counter: 42,
       });
     });
 
@@ -397,7 +397,7 @@ describe('SessionImpl - Data Operations', () => {
       inspectResult = (session as any)[inspectSymbol]();
       expect(inspectResult).toEqual({
         userId: '123',
-        tenantId: 'tenant-456'
+        tenantId: 'tenant-456',
       });
     });
 
@@ -423,11 +423,11 @@ describe('SessionImpl - Data Operations', () => {
       // The inspect symbol is called internally by Node.js util.inspect()
       const session = SessionImpl.createNew<TestSessionData>(adapter as any, mockOptions);
       session.set('userId', '123');
-      
+
       // Verify the method exists by checking the symbol on the session
       const hasInspect = inspectSymbol in session;
       expect(hasInspect).toBe(true);
-      
+
       // Verify calling it returns the expected data
       const result = (session as any)[inspectSymbol]();
       expect(result).toEqual({ userId: '123' });
@@ -439,17 +439,17 @@ describe('SessionImpl - Data Operations', () => {
       const session = SessionImpl.createNew<TestSessionData>(adapter as any, mockOptions);
       session.set('userId', '123');
       session.set('tenantId', 'tenant-456');
-      
+
       const json = session.toJSON();
       const str = session.toString();
       const inspect = (session as any)[Symbol.for('nodejs.util.inspect.custom')]();
-      
+
       // toJSON and inspect should return same structure
       expect(json).toEqual(inspect);
-      
+
       // toString should match JSON.stringify(toJSON())
       expect(str).toBe(JSON.stringify(json));
-      
+
       // All should represent same data
       expect(json).toEqual({ userId: '123', tenantId: 'tenant-456' });
       expect(JSON.parse(str)).toEqual({ userId: '123', tenantId: 'tenant-456' });

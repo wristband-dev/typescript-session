@@ -108,7 +108,7 @@ describe('prepareOptions', () => {
       const options: SessionOptions = {
         secrets: validSecret,
         domain: '.example.com',
-        csrfCookieDomain: '.csrf.example.com'
+        csrfCookieDomain: '.csrf.example.com',
       };
       const result = prepareOptions(options);
       expect(result.csrfCookieDomain).toBe('.csrf.example.com');
@@ -194,7 +194,7 @@ describe('prepareOptions', () => {
       const options: SessionOptions = { secrets: [] };
       expect(() => prepareOptions(options)).toThrow(SessionError);
       expect(() => prepareOptions(options)).toThrow('At least one secret is required');
-      
+
       try {
         prepareOptions(options);
       } catch (error) {
@@ -228,7 +228,7 @@ describe('prepareOptions', () => {
 
     it('should throw error when more than 3 secrets provided', () => {
       const options: SessionOptions = {
-        secrets: ['a'.repeat(32), 'b'.repeat(32), 'c'.repeat(32), 'd'.repeat(32)]
+        secrets: ['a'.repeat(32), 'b'.repeat(32), 'c'.repeat(32), 'd'.repeat(32)],
       };
       expect(() => prepareOptions(options)).toThrow(SessionError);
       expect(() => prepareOptions(options)).toThrow('Maximum 3 secrets');
@@ -236,7 +236,7 @@ describe('prepareOptions', () => {
 
     it('should accept exactly 3 secrets', () => {
       const options: SessionOptions = {
-        secrets: ['a'.repeat(32), 'b'.repeat(32), 'c'.repeat(32)]
+        secrets: ['a'.repeat(32), 'b'.repeat(32), 'c'.repeat(32)],
       };
       const result = prepareOptions(options);
       expect(result.secrets).toEqual(['a'.repeat(32), 'b'.repeat(32), 'c'.repeat(32)]);
@@ -272,7 +272,7 @@ describe('prepareOptions', () => {
       const options: SessionOptions = { secrets: validSecret, maxAge: 0 };
       expect(() => prepareOptions(options)).toThrow(SessionError);
       expect(() => prepareOptions(options)).toThrow('maxAge must be greater than 0');
-      
+
       try {
         prepareOptions(options);
       } catch (error) {
@@ -303,7 +303,7 @@ describe('prepareOptions', () => {
     it('should handle minimal configuration', () => {
       const options: SessionOptions = { secrets: validSecret };
       const result = prepareOptions(options);
-      
+
       expect(result).toEqual({
         cookieName: 'session',
         secrets: validSecret,
@@ -312,7 +312,7 @@ describe('prepareOptions', () => {
         secure: true,
         sameSite: 'Lax',
         csrfCookieName: 'CSRF-TOKEN',
-        enableCsrfProtection: false
+        enableCsrfProtection: false,
       });
     });
 
@@ -327,10 +327,10 @@ describe('prepareOptions', () => {
         sameSite: 'strict',
         csrfCookieName: 'X-CSRF',
         csrfCookieDomain: '.csrf.example.com',
-        enableCsrfProtection: true
+        enableCsrfProtection: true,
       };
       const result = prepareOptions(options);
-      
+
       expect(result).toEqual({
         cookieName: 'my-session',
         secrets: ['a'.repeat(32), 'b'.repeat(32)],
@@ -341,7 +341,7 @@ describe('prepareOptions', () => {
         sameSite: 'Strict',
         csrfCookieName: 'X-CSRF',
         csrfCookieDomain: '.csrf.example.com',
-        enableCsrfProtection: true
+        enableCsrfProtection: true,
       });
     });
 
@@ -349,10 +349,10 @@ describe('prepareOptions', () => {
       const options: SessionOptions = {
         secrets: validSecret,
         domain: '.example.com',
-        enableCsrfProtection: true
+        enableCsrfProtection: true,
       };
       const result = prepareOptions(options);
-      
+
       expect(result.domain).toBe('.example.com');
       expect(result.csrfCookieDomain).toBe('.example.com');
       expect(result.enableCsrfProtection).toBe(true);

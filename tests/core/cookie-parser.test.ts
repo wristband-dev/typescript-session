@@ -7,7 +7,7 @@ describe('CookieParser', () => {
     maxAge: 3600,
     secure: true,
     httpOnly: true,
-    sameSite: 'Lax'
+    sameSite: 'Lax',
   };
 
   describe('parse', () => {
@@ -21,7 +21,7 @@ describe('CookieParser', () => {
       expect(result).toEqual({
         session: 'abc123',
         theme: 'dark',
-        lang: 'en'
+        lang: 'en',
       });
     });
 
@@ -35,7 +35,7 @@ describe('CookieParser', () => {
       expect(result).toEqual({
         session: 'abc123',
         theme: 'dark',
-        lang: 'en'
+        lang: 'en',
       });
     });
 
@@ -69,7 +69,7 @@ describe('CookieParser', () => {
       const result = CookieParser.parse('session=abc123; invalidcookie; theme=dark');
       expect(result).toEqual({
         session: 'abc123',
-        theme: 'dark'
+        theme: 'dark',
       });
     });
 
@@ -78,7 +78,7 @@ describe('CookieParser', () => {
       expect(result).toEqual({
         session: 'abc123',
         empty: '',
-        theme: 'dark'
+        theme: 'dark',
       });
     });
 
@@ -86,7 +86,7 @@ describe('CookieParser', () => {
       const result = CookieParser.parse(' session=abc123 ;  theme=dark ');
       expect(result).toEqual({
         session: 'abc123',
-        theme: 'dark'
+        theme: 'dark',
       });
     });
 

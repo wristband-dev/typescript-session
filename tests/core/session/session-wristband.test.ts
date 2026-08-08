@@ -12,7 +12,7 @@ describe('SessionImpl - Wristband Integration', () => {
     applicationId: 'app-789',
     identityProviderName: 'Wristband',
     email: 'user@example.com',
-    fullName: 'Test User'
+    fullName: 'Test User',
   };
 
   const mockCallbackData: CallbackData = {
@@ -21,7 +21,7 @@ describe('SessionImpl - Wristband Integration', () => {
     expiresIn: 3600,
     idToken: 'id-token-xyz',
     tenantName: 'Test Tenant',
-    userinfo: mockUserInfo
+    userinfo: mockUserInfo,
   };
 
   beforeEach(() => {
@@ -162,7 +162,7 @@ describe('SessionImpl - Wristband Integration', () => {
       // Update with new callback data
       const newCallbackData = {
         ...mockCallbackData,
-        userinfo: { ...mockUserInfo, userId: 'user-456' }
+        userinfo: { ...mockUserInfo, userId: 'user-456' },
       };
       session.fromCallback(newCallbackData);
       expect(session.get('userId')).toBe('user-456');
@@ -173,7 +173,7 @@ describe('SessionImpl - Wristband Integration', () => {
       session.fromCallback(mockCallbackData, {});
       const json = session.toJSON();
       const fieldCount = Object.keys(json).length;
-      
+
       // Should only have the 7 base Wristband fields (no custom fields added)
       expect(fieldCount).toBe(7);
       expect(json).toHaveProperty('isAuthenticated');
@@ -253,7 +253,7 @@ describe('SessionImpl - Wristband Integration', () => {
       const metadata = {
         user: { name: 'Test', age: 30 },
         preferences: ['a', 'b', 'c'],
-        flags: { feature1: true, feature2: false }
+        flags: { feature1: true, feature2: false },
       };
       const response = session.getSessionResponse(metadata);
       expect(response.metadata).toEqual(metadata);
@@ -360,7 +360,7 @@ describe('SessionImpl - Wristband Integration', () => {
       session.fromCallback(mockCallbackData);
       const response = session.getSessionResponse({
         preferences: { theme: 'dark' },
-        roles: ['admin']
+        roles: ['admin'],
       });
 
       expect(response).toEqual({
@@ -368,8 +368,8 @@ describe('SessionImpl - Wristband Integration', () => {
         userId: 'user-123',
         metadata: {
           preferences: { theme: 'dark' },
-          roles: ['admin']
-        }
+          roles: ['admin'],
+        },
       });
     });
 
@@ -380,7 +380,7 @@ describe('SessionImpl - Wristband Integration', () => {
 
       expect(response).toEqual({
         accessToken: 'access-token-abc',
-        expiresAt: mockCallbackData.expiresAt
+        expiresAt: mockCallbackData.expiresAt,
       });
     });
 
@@ -400,7 +400,7 @@ describe('SessionImpl - Wristband Integration', () => {
       // Re-authenticate with different user
       const newCallback = {
         ...mockCallbackData,
-        userinfo: { ...mockUserInfo, userId: 'user-789', tenantId: 'tenant-abc' }
+        userinfo: { ...mockUserInfo, userId: 'user-789', tenantId: 'tenant-abc' },
       };
       session.fromCallback(newCallback);
 

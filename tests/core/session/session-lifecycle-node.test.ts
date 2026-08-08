@@ -23,7 +23,7 @@ describe('SessionImpl - Lifecycle (Node.js)', () => {
           path: '/',
           secure: true,
           httpOnly: true,
-          sameSite: 'Lax'
+          sameSite: 'Lax',
         })
       );
     });
@@ -45,7 +45,7 @@ describe('SessionImpl - Lifecycle (Node.js)', () => {
       const session = SessionImpl.createNew<TestSessionData>(adapter as any, mockOptions);
       session.set('userId', '123');
       await expect(session.save()).rejects.toThrow(SessionError);
-      
+
       try {
         await session.save();
       } catch (error) {
@@ -60,7 +60,7 @@ describe('SessionImpl - Lifecycle (Node.js)', () => {
       session.set('userId', '123');
       session.destroy();
       await expect(session.save()).rejects.toThrow(SessionError);
-      
+
       try {
         await session.save();
       } catch (error) {
@@ -209,7 +209,7 @@ describe('SessionImpl - Lifecycle (Node.js)', () => {
       const session = SessionImpl.createNew<TestSessionData>(adapter as any, mockOptions);
       session.set('userId', '123');
       await expect(session.flush()).rejects.toThrow(SessionError);
-      
+
       try {
         await session.flush();
       } catch (error) {
@@ -265,7 +265,7 @@ describe('SessionImpl - Lifecycle (Node.js)', () => {
       // Now make adapter unable to write
       adapter.canWriteCookies.mockReturnValue(false);
       await expect(session.flush()).rejects.toThrow(SessionError);
-      
+
       try {
         await session.flush();
       } catch (error) {
@@ -293,7 +293,7 @@ describe('SessionImpl - Lifecycle (Node.js)', () => {
       const session = SessionImpl.createNew<TestSessionData>(adapter as any, mockOptions);
       session.set('userId', '123');
       expect(() => session.flushSync()).toThrow(SessionError);
-      
+
       try {
         session.flushSync();
       } catch (error) {
@@ -310,11 +310,7 @@ describe('SessionImpl - Lifecycle (Node.js)', () => {
       await session.save();
       session.flushSync();
       expect(adapter.writeCookie).toHaveBeenCalledTimes(1);
-      expect(adapter.writeCookie).toHaveBeenCalledWith(
-        'session',
-        expect.any(String),
-        expect.any(Object)
-      );
+      expect(adapter.writeCookie).toHaveBeenCalledWith('session', expect.any(String), expect.any(Object));
     });
 
     it('should delete cookies synchronously when destroy was called', () => {
@@ -359,7 +355,7 @@ describe('SessionImpl - Lifecycle (Node.js)', () => {
       // Now make adapter unable to write
       adapter.canWriteCookies.mockReturnValue(false);
       expect(() => session.flushSync()).toThrow(SessionError);
-      
+
       try {
         session.flushSync();
       } catch (error) {

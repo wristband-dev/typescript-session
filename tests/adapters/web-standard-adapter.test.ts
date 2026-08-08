@@ -94,7 +94,7 @@ describe('WebStandardAdapter', () => {
       path: '/',
       secure: true,
       httpOnly: true,
-      sameSite: 'Lax'
+      sameSite: 'Lax',
     };
 
     it('should throw error when no response object', () => {
@@ -242,7 +242,7 @@ describe('WebStandardAdapter', () => {
         path: '/',
         secure: true,
         httpOnly: true,
-        sameSite: 'Lax'
+        sameSite: 'Lax',
       };
 
       try {

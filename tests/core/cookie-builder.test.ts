@@ -11,7 +11,7 @@ describe('CookieBuilder', () => {
         path: '/',
         secure: true,
         httpOnly: true,
-        sameSite: 'Lax'
+        sameSite: 'Lax',
       });
     });
 
@@ -24,7 +24,7 @@ describe('CookieBuilder', () => {
         secure: true,
         httpOnly: true,
         sameSite: 'Lax',
-        domain: '.example.com'
+        domain: '.example.com',
       });
     });
 
@@ -78,7 +78,7 @@ describe('CookieBuilder', () => {
         path: '/',
         secure: true,
         httpOnly: false,
-        sameSite: 'Lax'
+        sameSite: 'Lax',
       });
     });
 
@@ -98,7 +98,7 @@ describe('CookieBuilder', () => {
       const optionsWithBoth: NormalizedSessionOptions = {
         ...mockOptions,
         domain: '.example.com',
-        csrfCookieDomain: '.csrf.example.com'
+        csrfCookieDomain: '.csrf.example.com',
       };
       const result = CookieBuilder.forCsrf(optionsWithBoth);
       expect(result.domain).toBe('.csrf.example.com');
@@ -137,7 +137,7 @@ describe('CookieBuilder', () => {
         path: '/',
         secure: true,
         httpOnly: true,
-        sameSite: 'Lax'
+        sameSite: 'Lax',
       });
     });
 
@@ -190,7 +190,7 @@ describe('CookieBuilder', () => {
         path: '/',
         secure: true,
         httpOnly: false,
-        sameSite: 'Lax'
+        sameSite: 'Lax',
       });
     });
 
@@ -210,7 +210,7 @@ describe('CookieBuilder', () => {
       const optionsWithBoth: NormalizedSessionOptions = {
         ...mockOptions,
         domain: '.example.com',
-        csrfCookieDomain: '.csrf.example.com'
+        csrfCookieDomain: '.csrf.example.com',
       };
       const result = CookieBuilder.forCsrfDestroy(optionsWithBoth);
       expect(result.domain).toBe('.csrf.example.com');
