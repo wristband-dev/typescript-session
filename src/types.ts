@@ -737,6 +737,8 @@ export interface SessionAdapter {
   readCookie(cookieName: string): string | undefined;
   /** Write cookie to response */
   writeCookie(cookieName: string, value: string, options: CookieOptions): void;
+  /** Write the no-cache headers to response (called whenever session cookies are written) */
+  writeNoCacheHeaders(): void;
   /** Check if adapter can write cookies directly */
   canWriteCookies(): boolean;
 }

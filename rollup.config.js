@@ -48,10 +48,16 @@ export default [
   // Types bundle
   {
     input: 'src/index.ts',
-    output: {
-      file: 'dist/index.d.ts',
-      format: 'es',
-    },
+    output: [
+      {
+        file: 'dist/index.d.ts',
+        format: 'es',
+      },
+      {
+        file: 'dist/index.d.cts',
+        format: 'es',
+      },
+    ],
     external,
     plugins: [dts()],
   },

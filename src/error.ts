@@ -181,6 +181,7 @@ export class SessionCryptoError extends Error {
     this.code = code;
 
     if (cause) {
+      // eslint-disable-next-line @typescript-eslint/no-base-to-string -- cause is always an Error from internal callers
       this.cause = cause instanceof Error ? cause : new Error(String(cause));
     }
 

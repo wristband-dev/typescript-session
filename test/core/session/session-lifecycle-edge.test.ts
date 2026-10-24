@@ -1,4 +1,5 @@
 import { SessionError, SessionErrorCode } from '../../../src/error';
+import { SessionCrypto } from '../../../src/core/crypto';
 import { SessionImpl } from '../../../src/core/session';
 import { EdgeMockAdapter, mockOptions, TestSessionData } from '../../test-utils';
 
@@ -111,6 +112,58 @@ describe('SessionImpl - Lifecycle (Edge/Web)', () => {
         expect((error as SessionError).message).toContain('Cannot save a destroyed session');
       }
     });
+
+    it('should set no-cache headers on the returned response', async () => {
+      const session = SessionImpl.createNew<TestSessionData>(adapter as any, mockOptions);
+      session.set('userId', '123');
+      const newResponse = await session.saveToResponse(new Response('Hello'));
+      expect(newResponse.headers.get('cache-control')).toBe('no-store');
+      expect(newResponse.headers.get('pragma')).toBe('no-cache');
+    });
+
+    it('should replace existing Cache-Control and Pragma headers', async () => {
+      const session = SessionImpl.createNew<TestSessionData>(adapter as any, mockOptions);
+      session.set('userId', '123');
+      const originalResponse = new Response('Hello', {
+        headers: { 'Cache-Control': 'public, max-age=60', Pragma: 'public' },
+      });
+      const newResponse = await session.saveToResponse(originalResponse);
+      expect(newResponse.headers.get('cache-control')).toBe('no-store');
+      expect(newResponse.headers.get('pragma')).toBe('no-cache');
+    });
+
+    it('should not modify the headers of the original response', async () => {
+      const session = SessionImpl.createNew<TestSessionData>(adapter as any, mockOptions);
+      session.set('userId', '123');
+      const originalResponse = new Response('Hello');
+      await session.saveToResponse(originalResponse);
+      expect(originalResponse.headers.get('cache-control')).toBeNull();
+      expect(originalResponse.headers.get('pragma')).toBeNull();
+    });
+
+    it('should set no-cache headers directly instead of through the adapter', async () => {
+      const session = SessionImpl.createNew<TestSessionData>(adapter as any, mockOptions);
+      session.set('userId', '123');
+      await session.saveToResponse(new Response('Hello'));
+      expect(adapter.writeNoCacheHeaders).not.toHaveBeenCalled();
+    });
+
+    it('should throw SESSION_SAVE_FAILED when encryption fails', async () => {
+      const encryptSpy = jest.spyOn(SessionCrypto, 'encrypt').mockRejectedValue(new Error('Encryption failed'));
+      const session = SessionImpl.createNew<TestSessionData>(adapter as any, mockOptions);
+      session.set('userId', '123');
+
+      try {
+        await session.saveToResponse(new Response('Hello'));
+        fail('Should have thrown');
+      } catch (error) {
+        expect(error).toBeInstanceOf(SessionError);
+        expect((error as SessionError).code).toBe(SessionErrorCode.SESSION_SAVE_FAILED);
+        expect((error as SessionError).message).toBe('Failed to encrypt session data');
+      } finally {
+        encryptSpy.mockRestore();
+      }
+    });
   });
 
   describe('destroyToResponse()', () => {
@@ -204,6 +257,41 @@ describe('SessionImpl - Lifecycle (Edge/Web)', () => {
         session.destroyToResponse(originalResponse);
       }).not.toThrow();
     });
+
+    it('should set no-cache headers on the returned response', () => {
+      const session = SessionImpl.createNew<TestSessionData>(adapter as any, mockOptions);
+      session.set('userId', '123');
+      const newResponse = session.destroyToResponse(new Response('Goodbye'));
+      expect(newResponse.headers.get('cache-control')).toBe('no-store');
+      expect(newResponse.headers.get('pragma')).toBe('no-cache');
+    });
+
+    it('should replace existing Cache-Control and Pragma headers', () => {
+      const session = SessionImpl.createNew<TestSessionData>(adapter as any, mockOptions);
+      session.set('userId', '123');
+      const originalResponse = new Response('Goodbye', {
+        headers: { 'Cache-Control': 'public, max-age=60', Pragma: 'public' },
+      });
+      const newResponse = session.destroyToResponse(originalResponse);
+      expect(newResponse.headers.get('cache-control')).toBe('no-store');
+      expect(newResponse.headers.get('pragma')).toBe('no-cache');
+    });
+
+    it('should not modify the headers of the original response', () => {
+      const session = SessionImpl.createNew<TestSessionData>(adapter as any, mockOptions);
+      session.set('userId', '123');
+      const originalResponse = new Response('Goodbye');
+      session.destroyToResponse(originalResponse);
+      expect(originalResponse.headers.get('cache-control')).toBeNull();
+      expect(originalResponse.headers.get('pragma')).toBeNull();
+    });
+
+    it('should set no-cache headers directly instead of through the adapter', () => {
+      const session = SessionImpl.createNew<TestSessionData>(adapter as any, mockOptions);
+      session.set('userId', '123');
+      session.destroyToResponse(new Response('Goodbye'));
+      expect(adapter.writeNoCacheHeaders).not.toHaveBeenCalled();
+    });
   });
 
   describe('getCookieDataForSave()', () => {
@@ -263,6 +351,23 @@ describe('SessionImpl - Lifecycle (Edge/Web)', () => {
       } catch (error) {
         expect(error).toBeInstanceOf(SessionError);
         expect((error as SessionError).code).toBe(SessionErrorCode.SESSION_DESTROYED);
+      }
+    });
+
+    it('should throw SESSION_SAVE_FAILED when encryption fails', async () => {
+      const encryptSpy = jest.spyOn(SessionCrypto, 'encrypt').mockRejectedValue(new Error('Encryption failed'));
+      const session = SessionImpl.createNew<TestSessionData>(adapter as any, mockOptions);
+      session.set('userId', '123');
+
+      try {
+        await session.getCookieDataForSave();
+        fail('Should have thrown');
+      } catch (error) {
+        expect(error).toBeInstanceOf(SessionError);
+        expect((error as SessionError).code).toBe(SessionErrorCode.SESSION_SAVE_FAILED);
+        expect((error as SessionError).message).toBe('Failed to encrypt session data');
+      } finally {
+        encryptSpy.mockRestore();
       }
     });
   });

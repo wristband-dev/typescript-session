@@ -3,12 +3,14 @@ import { NormalizedSessionOptions, SessionData } from '../src/types';
 export class MockAdapter {
   readCookie = jest.fn().mockReturnValue(undefined);
   writeCookie = jest.fn();
+  writeNoCacheHeaders = jest.fn();
   canWriteCookies = jest.fn().mockReturnValue(true);
 }
 
 export class EdgeMockAdapter {
   readCookie = jest.fn().mockReturnValue(undefined);
   writeCookie = jest.fn();
+  writeNoCacheHeaders = jest.fn();
   canWriteCookies = jest.fn().mockReturnValue(false); // Edge doesn't have direct cookie access
 }
 

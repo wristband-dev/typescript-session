@@ -5,7 +5,7 @@ import { SessionCryptoError, SessionCryptoErrorCode } from '../error';
 // Load Node's crypto module (required for synchronous methods in this class)
 let nodeCrypto: typeof import('crypto') | null = null;
 try {
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-require-imports
   nodeCrypto = require('node:crypto');
 } catch {
   // Node crypto not available (Edge/browser environment)
@@ -46,7 +46,7 @@ if (!webCrypto?.subtle) {
  * ```
  * [version:1][timestamp:8][iv:12][encrypted_data + auth_tag:variable]
  * ```
- * All values are base64-encoded for safe cookie storage.
+ * All values are base64-urlencoded for safe cookie storage.
  *
  * @example
  * ```typescript
@@ -140,7 +140,7 @@ export class SessionCrypto {
         false,
         ['encrypt', 'decrypt']
       );
-    } catch (error) {
+    } catch {
       throw new SessionCryptoError(
         SessionCryptoErrorCode.ENCRYPTION_FAILED,
         'Failed to derive encryption key from secret'
@@ -149,7 +149,7 @@ export class SessionCrypto {
   }
 
   /**
-   * Asynchronously encrypt session data into a secure, base64-encoded cookie value.
+   * Asynchronously encrypt session data into a secure, base64-urlencoded cookie value.
    *
    * Uses AES-256-GCM authenticated encryption with a randomly generated IV for each
    * encryption operation. The resulting cookie includes version metadata, encryption
@@ -160,13 +160,13 @@ export class SessionCrypto {
    *
    * @param data - Session data object to encrypt (will be JSON-serialized)
    * @param secret - High-entropy secret string (minimum 32 characters recommended)
-   * @returns Promise resolving to base64-encoded encrypted cookie string
+   * @returns Promise resolving to base64-urlencoded encrypted cookie string
    * @throws {SessionCryptoError} If encryption fails or Web Crypto API is unavailable
    *
    * @remarks
    * - Generates a fresh random 96-bit IV for each encryption (never reuses IVs)
    * - Embeds current timestamp for TTL validation during decryption
-   * - Output is safe for HTTP cookie storage (base64-encoded, no special characters)
+   * - Output is safe for HTTP cookie storage (base64-urlencoded, no special characters)
    * - Maximum practical size is ~2.7KB of session data (4KB cookie limit minus overhead)
    *
    * @example
@@ -191,7 +191,7 @@ export class SessionCrypto {
       let dataBytes;
       try {
         dataBytes = this.encoder.encode(JSON.stringify(data));
-      } catch (error) {
+      } catch {
         throw new SessionCryptoError(
           SessionCryptoErrorCode.ENCRYPTION_FAILED,
           'Session data must be JSON-serializable'
@@ -221,8 +221,8 @@ export class SessionCrypto {
       combined.set(iv, 9);
       combined.set(new Uint8Array(encrypted), 21);
 
-      // Convert to base64
-      const encodedValue = Base64.encode(combined);
+      // Convert to base64 URL
+      const encodedValue = Base64.urlEncode(combined);
 
       // Check actual cookie size is not more than 4KB
       if (encodedValue.length > this.MAX_SESSION_SIZE_BYTES) {
@@ -244,18 +244,18 @@ export class SessionCrypto {
   /**
    * Asynchronously decrypt and validate an encrypted session cookie.
    *
-   * Decrypts a base64-encoded session cookie, validates its authentication tag to
+   * Decrypts a base64-urlencoded session cookie, validates its authentication tag to
    * ensure integrity, and checks that the session has not expired based on the
    * embedded timestamp and provided maxAge parameter.
    *
    * This method works across all JavaScript environments using the Web Crypto API.
    *
-   * @param encryptedValue - Base64-encoded encrypted cookie string (from {@link encrypt})
+   * @param encryptedValue - Base64-urlencoded encrypted cookie string (from {@link encrypt})
    * @param secret - Secret string used during encryption (must match)
    * @param maxAge - Maximum session age in seconds (e.g., 3600 for 1 hour)
    * @returns Promise resolving to decrypted SessionData object
    * @throws {SessionCryptoError} If decryption fails due to:
-   * - Invalid base64 encoding
+   * - Invalid base64 URL encoding
    * - Cookie size exceeds 4KB limit
    * - Malformed cookie structure
    * - Unsupported version number
@@ -294,8 +294,8 @@ export class SessionCrypto {
     this.validateMaxAge(maxAge);
 
     try {
-      // Decode base64
-      const bytes = Base64.decode(encryptedValue);
+      // Decode
+      const bytes = Base64.urlDecode(encryptedValue);
 
       // Maximum size check (4KB browser cookie limit)
       if (bytes.length > this.MAX_SESSION_SIZE_BYTES) {
@@ -358,7 +358,7 @@ export class SessionCrypto {
    *
    * TTL validation is performed during each decryption attempt.
    *
-   * @param encryptedValue - Base64-encoded encrypted cookie string
+   * @param encryptedValue - Base64-urlencoded encrypted cookie string
    * @param secrets - Array of secret strings to try (typically [newSecret, oldSecret])
    * @param maxAge - Maximum session age in seconds
    *
@@ -437,7 +437,7 @@ export class SessionCrypto {
    * @param data - Session data object to encrypt (will be JSON-serialized)
    * @param secret - High-entropy secret string (minimum 32 characters recommended)
    *
-   * @returns Base64-encoded encrypted cookie string
+   * @returns Base64-urlencoded encrypted cookie string
    *
    * @throws {Error} If:
    * - Called in non-Node.js environment (no node:crypto module)
@@ -517,8 +517,8 @@ export class SessionCrypto {
       timestamp.writeBigUInt64BE(BigInt(Date.now()));
       const combined = Buffer.concat([Buffer.from([this.VERSION]), timestamp, iv, encryptedWithTag]);
 
-      // Convert to base64 (matching async version)
-      const encodedValue = Base64.encode(new Uint8Array(combined));
+      // Convert to base64 URL (matching async version)
+      const encodedValue = Base64.urlEncode(new Uint8Array(combined));
 
       // Check actual cookie size is not more than 4KB
       if (encodedValue.length > this.MAX_SESSION_SIZE_BYTES) {
@@ -549,7 +549,7 @@ export class SessionCrypto {
    * Binary format is identical to async version, ensuring full cross-compatibility.
    * Can decrypt sessions created by {@link encrypt} or {@link encryptSync}.
    *
-   * @param encryptedValue - Base64-encoded encrypted cookie string
+   * @param encryptedValue - Base64-urlencoded encrypted cookie string
    * @param secret - Secret string used during encryption (must match)
    * @param maxAge - Maximum session age in seconds (e.g., 3600 for 1 hour)
    *
@@ -606,8 +606,8 @@ export class SessionCrypto {
     this.validateMaxAge(maxAge);
 
     try {
-      // Decode base64 (matching async version)
-      const bytes = Buffer.from(Base64.decode(encryptedValue));
+      // Decode base64 URL (matching async version)
+      const bytes = Buffer.from(Base64.urlDecode(encryptedValue));
 
       // Validate size
       if (bytes.length > this.MAX_SESSION_SIZE_BYTES) {
@@ -679,7 +679,7 @@ export class SessionCrypto {
    *
    * ⚠️ **Node.js Only** - This method is only available in Node.js environments.
    *
-   * @param encryptedValue - Base64-encoded encrypted cookie string
+   * @param encryptedValue - Base64-urlencoded encrypted cookie string
    * @param secrets - Array of secret strings to try (typically [newSecret, oldSecret])
    * @param maxAge - Maximum session age in seconds
    *

@@ -1,24 +1,38 @@
 import { Base64 } from '../../src/core/base64';
 
 describe('Base64', () => {
-  describe('encode', () => {
+  describe('urlEncode', () => {
     it('should encode empty Uint8Array to empty string', () => {
       const input = new Uint8Array(0);
-      const result = Base64.encode(input);
+      const result = Base64.urlEncode(input);
       expect(result).toBe('');
     });
 
     it('should encode simple ASCII text', () => {
       // "Hello"
       const input = new Uint8Array([72, 101, 108, 108, 111]);
-      const result = Base64.encode(input);
-      expect(result).toBe('SGVsbG8=');
+      const result = Base64.urlEncode(input);
+      expect(result).toBe('SGVsbG8');
     });
 
     it('should encode single byte', () => {
       const input = new Uint8Array([65]); // 'A'
-      const result = Base64.encode(input);
-      expect(result).toBe('QQ==');
+      const result = Base64.urlEncode(input);
+      expect(result).toBe('QQ');
+    });
+
+    it('should use - and _ instead of + and /', () => {
+      // These bytes encode to "+/8=" in standard base64
+      const input = new Uint8Array([0xfb, 0xff]);
+      const result = Base64.urlEncode(input);
+      expect(result).toBe('-_8');
+    });
+
+    it('should not include padding', () => {
+      for (let length = 1; length <= 6; length++) {
+        const result = Base64.urlEncode(new Uint8Array(length).fill(255));
+        expect(result).not.toContain('=');
+      }
     });
 
     it('should encode binary data with all byte values', () => {
@@ -27,12 +41,12 @@ describe('Base64', () => {
       for (let i = 0; i < 256; i++) {
         input[i] = i;
       }
-      const result = Base64.encode(input);
+      const result = Base64.urlEncode(input);
       expect(result).toBeTruthy();
       expect(result.length).toBeGreaterThan(0);
 
-      // Verify it's valid base64
-      expect(result).toMatch(/^[A-Za-z0-9+/]*={0,2}$/);
+      // Verify it's valid base64url (no +, /, or = padding)
+      expect(result).toMatch(/^[A-Za-z0-9_-]*$/);
     });
 
     it('should encode UTF-8 byte sequences', () => {
@@ -51,9 +65,9 @@ describe('Base64', () => {
         149,
         140, // "世界"
       ]);
-      const result = Base64.encode(input);
+      const result = Base64.urlEncode(input);
       expect(result).toBeTruthy();
-      expect(result).toMatch(/^[A-Za-z0-9+/]*={0,2}$/);
+      expect(result).toMatch(/^[A-Za-z0-9_-]*$/);
     });
 
     it('should handle data exactly at chunk boundary (32KB)', () => {
@@ -61,7 +75,7 @@ describe('Base64', () => {
       const input = new Uint8Array(chunkSize);
       input.fill(65); // Fill with 'A'
 
-      const result = Base64.encode(input);
+      const result = Base64.urlEncode(input);
       expect(result).toBeTruthy();
       expect(result.length).toBeGreaterThan(0);
     });
@@ -75,7 +89,7 @@ describe('Base64', () => {
         input[i] = i % 256;
       }
 
-      const result = Base64.encode(input);
+      const result = Base64.urlEncode(input);
       expect(result).toBeTruthy();
       expect(result.length).toBeGreaterThan(0);
     });
@@ -85,94 +99,118 @@ describe('Base64', () => {
       const input = new Uint8Array(size);
       input.fill(88); // Fill with 'X'
 
-      const result = Base64.encode(input);
+      const result = Base64.urlEncode(input);
       expect(result).toBeTruthy();
       expect(result.length).toBeGreaterThan(0);
     });
 
     it('should produce consistent output for same input', () => {
       const input = new Uint8Array([1, 2, 3, 4, 5]);
-      const result1 = Base64.encode(input);
-      const result2 = Base64.encode(input);
+      const result1 = Base64.urlEncode(input);
+      const result2 = Base64.urlEncode(input);
       expect(result1).toBe(result2);
     });
   });
 
-  describe('decode', () => {
+  describe('urlDecode', () => {
     it('should decode empty string to empty Uint8Array', () => {
-      const result = Base64.decode('');
+      const result = Base64.urlDecode('');
       expect(result).toEqual(new Uint8Array(0));
       expect(result.length).toBe(0);
     });
 
-    it('should decode simple base64 string', () => {
-      const result = Base64.decode('SGVsbG8=');
-      expect(result).toEqual(new Uint8Array([72, 101, 108, 108, 111]));
-    });
-
-    it('should decode base64 without padding', () => {
-      const result = Base64.decode('SGVsbG8'); // No padding
+    it('should decode simple base64url string', () => {
+      const result = Base64.urlDecode('SGVsbG8');
       expect(result).toEqual(new Uint8Array([72, 101, 108, 108, 111]));
     });
 
     it('should decode single character', () => {
-      const result = Base64.decode('QQ==');
+      const result = Base64.urlDecode('QQ');
       expect(result).toEqual(new Uint8Array([65]));
     });
 
-    it('should decode base64 with all byte values', () => {
+    it('should decode base64url with - and _ characters', () => {
+      const result = Base64.urlDecode('-_8');
+      expect(result).toEqual(new Uint8Array([0xfb, 0xff]));
+    });
+
+    it('should decode base64url with all byte values', () => {
       const original = new Uint8Array(256);
       for (let i = 0; i < 256; i++) {
         original[i] = i;
       }
-      const encoded = Base64.encode(original);
-      const decoded = Base64.decode(encoded);
+      const encoded = Base64.urlEncode(original);
+      const decoded = Base64.urlDecode(encoded);
       expect(decoded).toEqual(original);
     });
 
     it('should throw on invalid base64 characters', () => {
-      expect(() => Base64.decode('!!!invalid!!!')).toThrow();
-      expect(() => Base64.decode('SGVs^G8=')).toThrow();
-      expect(() => Base64.decode('Hello@World')).toThrow(); // @ is invalid in base64
+      expect(() => Base64.urlDecode('!!!invalid!!!')).toThrow();
+      expect(() => Base64.urlDecode('SGVs^G8=')).toThrow();
+      expect(() => Base64.urlDecode('Hello@World')).toThrow(); // @ is invalid in base64
     });
 
     it('should throw on malformed base64 (odd length issues)', () => {
       // Base64 strings with invalid structure
-      expect(() => Base64.decode('A')).toThrow();
+      expect(() => Base64.urlDecode('A')).toThrow();
     });
 
-    it('should handle base64 with plus and slash characters', () => {
-      // Base64 can contain + and /
-      const base64WithSpecialChars = 'YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5K/==';
-      const result = Base64.decode(base64WithSpecialChars);
-      expect(result).toBeInstanceOf(Uint8Array);
-      expect(result.length).toBeGreaterThan(0);
-    });
-
-    it('should decode large base64 strings', () => {
+    it('should decode large base64url strings', () => {
       const size = 0x8000 * 2; // 64KB
       const original = new Uint8Array(size);
       for (let i = 0; i < size; i++) {
         original[i] = i % 256;
       }
-      const encoded = Base64.encode(original);
-      const decoded = Base64.decode(encoded);
+      const encoded = Base64.urlEncode(original);
+      const decoded = Base64.urlDecode(encoded);
       expect(decoded).toEqual(original);
     });
   });
 
-  describe('encode/decode roundtrip', () => {
+  describe('urlDecode backward compatibility with standard base64', () => {
+    it('should decode standard base64 with padding', () => {
+      expect(Base64.urlDecode('SGVsbG8=')).toEqual(new Uint8Array([72, 101, 108, 108, 111]));
+      expect(Base64.urlDecode('QQ==')).toEqual(new Uint8Array([65]));
+    });
+
+    it('should decode standard base64 with plus and slash characters', () => {
+      expect(Base64.urlDecode('+/8=')).toEqual(new Uint8Array([0xfb, 0xff]));
+    });
+
+    it('should decode standard base64 and base64url of the same data to the same bytes', () => {
+      const original = new Uint8Array(256);
+      for (let i = 0; i < 256; i++) {
+        original[i] = i;
+      }
+      const standard = Buffer.from(original).toString('base64');
+      const url = Base64.urlEncode(original);
+
+      expect(standard).toMatch(/[+/]/);
+      expect(Base64.urlDecode(standard)).toEqual(original);
+      expect(Base64.urlDecode(url)).toEqual(original);
+    });
+
+    it('should decode standard base64 of every padding length', () => {
+      for (let length = 1; length <= 6; length++) {
+        const original = new Uint8Array(length).fill(251);
+        const standard = Buffer.from(original).toString('base64');
+        expect(Base64.urlDecode(standard)).toEqual(original);
+      }
+    });
+  });
+
+  describe('urlEncode/urlDecode roundtrip', () => {
     it('should successfully roundtrip empty data', () => {
       const original = new Uint8Array(0);
-      const encoded = Base64.encode(original);
-      const decoded = Base64.decode(encoded);
+      const encoded = Base64.urlEncode(original);
+      const decoded = Base64.urlDecode(encoded);
       expect(decoded).toEqual(original);
     });
 
     it('should successfully roundtrip single byte', () => {
       const original = new Uint8Array([42]);
-      const encoded = Base64.encode(original);
-      const decoded = Base64.decode(encoded);
+      const encoded = Base64.urlEncode(original);
+      const decoded = Base64.urlDecode(encoded);
       expect(decoded).toEqual(original);
     });
 
@@ -181,16 +219,16 @@ describe('Base64', () => {
       for (let i = 0; i < original.length; i++) {
         original[i] = Math.floor(Math.random() * 256);
       }
-      const encoded = Base64.encode(original);
-      const decoded = Base64.decode(encoded);
+      const encoded = Base64.urlEncode(original);
+      const decoded = Base64.urlDecode(encoded);
       expect(decoded).toEqual(original);
     });
 
     it('should successfully roundtrip data at chunk boundary', () => {
       const original = new Uint8Array(0x8000);
       original.fill(123);
-      const encoded = Base64.encode(original);
-      const decoded = Base64.decode(encoded);
+      const encoded = Base64.urlEncode(original);
+      const decoded = Base64.urlDecode(encoded);
       expect(decoded).toEqual(original);
     });
 
@@ -199,8 +237,8 @@ describe('Base64', () => {
       for (let i = 0; i < original.length; i++) {
         original[i] = i % 256;
       }
-      const encoded = Base64.encode(original);
-      const decoded = Base64.decode(encoded);
+      const encoded = Base64.urlEncode(original);
+      const decoded = Base64.urlDecode(encoded);
       expect(decoded).toEqual(original);
     });
 
@@ -209,8 +247,8 @@ describe('Base64', () => {
       for (let i = 0; i < original.length; i++) {
         original[i] = (i * 7) % 256;
       }
-      const encoded = Base64.encode(original);
-      const decoded = Base64.decode(encoded);
+      const encoded = Base64.urlEncode(original);
+      const decoded = Base64.urlDecode(encoded);
       expect(decoded).toEqual(original);
     });
 
@@ -219,8 +257,8 @@ describe('Base64', () => {
       for (let i = 0; i < 256; i++) {
         original[i] = i;
       }
-      const encoded = Base64.encode(original);
-      const decoded = Base64.decode(encoded);
+      const encoded = Base64.urlEncode(original);
+      const decoded = Base64.urlDecode(encoded);
       expect(decoded).toEqual(original);
     });
   });
