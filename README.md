@@ -10,7 +10,8 @@
   <p align="center">
     <b>
       <a href="https://wristband.dev">Website</a> • 
-      <a href="https://docs.wristband.dev/">Documentation</a>
+      <a href="https://docs.wristband.dev/">Documentation</a> • 
+      <a href="https://docs.wristband.dev/llms.txt">LLMs.txt</a>
     </b>
   </p>
 </div>
@@ -894,7 +895,7 @@ These methods work in Node.js environments (Express, Next.js Pages Router, etc.)
 
 ##### `save()`
 
-Encrypts session data and writes the cookie (mutates the response object). If 	`enableCsrfProtection` is `true` in the SDK configuration, a CSRF token is generated, stored in `session.csrfToken`, and written to the CSRF cookie. It also sets `Cache-Control: no-store` and `Pragma: no-cache` on the response, replacing any existing values. This prevents browsers and shared caches (such as CDNs and proxies) from storing a response that carries a user's session cookie and serving it to someone else.
+Encrypts session data and writes the cookie (mutates the response object). If 	`enableCsrfProtection` is `true` in the SDK configuration, a CSRF token is generated, stored in `session.csrfToken`, and written to the CSRF cookie. It also sets `Cache-Control: no-store` and `Pragma: no-cache` on the response, replacing any existing values. This prevents browsers and shared caches (such as CDNs and proxies) from storing a response that carries a user's session cookie and serving it to someone else. In deferred mode, the headers are set when `flush()` or `flushSync()` writes the cookies.
 
 > 💡 For Edge runtimes, use `saveToResponse()`.
 
@@ -918,7 +919,7 @@ await session.save();
 
 ##### `destroy()`
 
-Deletes the underlying session data as well as the session cookie from the response (mutates the response object).  If `enableCsrfProtection` is `true` in the SDK configuration, then the CSRF cookie is deleted as well. It also sets `Cache-Control: no-store` and `Pragma: no-cache` on the response, replacing any existing values. This prevents browsers and shared caches (such as CDNs and proxies) from storing a response that carries a user's session cookie and serving it to someone else.
+Deletes the underlying session data as well as the session cookie from the response (mutates the response object).  If `enableCsrfProtection` is `true` in the SDK configuration, then the CSRF cookie is deleted as well. It also sets `Cache-Control: no-store` and `Pragma: no-cache` on the response, replacing any existing values. This prevents browsers and shared caches (such as CDNs and proxies) from storing a response that carries a user's session cookie and serving it to someone else. In deferred mode, the headers are set when `flush()` or `flushSync()` writes the cookies.
 
 > 💡 For Edge runtimes, use `destroyToResponse()`.
 
@@ -953,7 +954,7 @@ await session.flush(); // Actually writes cookies
 
 ##### `flush()`
 
-Asynchronously flush pending session changes. Used with deferred mode. It also sets `Cache-Control: no-store` and `Pragma: no-cache` on the response, replacing any existing values. This prevents browsers and shared caches (such as CDNs and proxies) from storing a response that carries a user's session cookie and serving it to someone else.
+Asynchronously flush pending session changes. Used with deferred mode. When pending session cookies are written, it also sets `Cache-Control: no-store` and `Pragma: no-cache` on the response, replacing any existing values. This prevents browsers and shared caches (such as CDNs and proxies) from storing a response that carries a user's session cookie and serving it to someone else.
 
 ```typescript
 await session.flush();
@@ -975,7 +976,7 @@ await session.flush();
 
 ##### `flushSync()`
 
-Synchronously flush pending session changes using Node.js crypto. Used with deferred mode. It also sets `Cache-Control: no-store` and `Pragma: no-cache` on the response, replacing any existing values. This prevents browsers and shared caches (such as CDNs and proxies) from storing a response that carries a user's session cookie and serving it to someone else.
+Synchronously flush pending session changes using Node.js crypto. Used with deferred mode. When pending session cookies are written, it also sets `Cache-Control: no-store` and `Pragma: no-cache` on the response, replacing any existing values. This prevents browsers and shared caches (such as CDNs and proxies) from storing a response that carries a user's session cookie and serving it to someone else.
 
 ```typescript
 session.flushSync();
@@ -1660,7 +1661,7 @@ session.getCookieDataForSave()
 
 ### TypeScript Support
 
-The SDK is built with full TypeScript support and type safety. The `SessionData` interface includes optional Wristband fields, but you can extend it with any custom fields you want:
+The SDK is built with full TypeScript support and type safety. The `SessionData` interface includes optional Wristband fields, and you can extend it with any custom fields you want:
 
 ```typescript
 interface SessionData {
@@ -1675,11 +1676,10 @@ interface SessionData {
   expiresAt?: number;
   refreshToken?: string;
   csrfToken?: string;
-  
-  // Your custom fields
-  [key: string]: any;
 }
 ```
+
+Custom fields must be declared before they can be used. Accessing an undeclared field (e.g. `session.cartId`) is a type error until you add it with one of the approaches below.
 
 #### Custom Session Data Types
 

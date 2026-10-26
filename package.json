@@ -2,7 +2,7 @@
   "name": "@wristband/typescript-session",
   "description": "Secure, encrypted cookie-based session management for TypeScript applications.",
   "author": "Wristband",
-  "version": "0.2.0",
+  "version": "1.0.0",
   "license": "MIT",
   "private": false,
   "homepage": "https://wristband.dev",

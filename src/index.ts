@@ -1,7 +1,6 @@
 export { SessionError, SessionErrorCode } from './error';
 export { getSession, getSessionSync } from './get-session';
 export type {
-  CallbackData,
   CookieOptions,
   SameSiteOption,
   Session,
@@ -9,6 +8,4 @@ export type {
   SessionOptions,
   SessionResponse,
   TokenResponse,
-  UserInfo,
-  UserInfoRole,
 } from './types';
