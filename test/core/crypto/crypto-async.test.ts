@@ -122,10 +122,10 @@ describe('SessionCrypto - Async Methods', () => {
       expect(encrypted).toBeDefined();
     });
 
-    it('should produce base64-encoded output', async () => {
+    it('should produce base64url-encoded output', async () => {
       const encrypted = await SessionCrypto.encrypt({ userId: '123' }, validSecret);
-      // Base64 only contains A-Z, a-z, 0-9, +, /, =
-      expect(encrypted).toMatch(/^[A-Za-z0-9+/=]+$/);
+      // Base64url only contains A-Z, a-z, 0-9, -, _ (no padding)
+      expect(encrypted).toMatch(/^[A-Za-z0-9_-]+$/);
     });
 
     it('should throw SESSION_TOO_LARGE for very large session data', async () => {
@@ -307,6 +307,18 @@ describe('SessionCrypto - Async Methods', () => {
       const decrypted = await SessionCrypto.decrypt(encrypted, validSecret, 1);
       expect(decrypted).toEqual(original);
     });
+
+    it('should decrypt legacy standard base64-encoded session (backward compatibility)', async () => {
+      const original = { userId: '123' };
+      const encrypted = await SessionCrypto.encrypt(original, validSecret);
+
+      // Re-encode as standard base64, the format used before base64url
+      const legacy = Buffer.from(encrypted, 'base64url').toString('base64');
+      expect(legacy).toContain('=');
+
+      const decrypted = await SessionCrypto.decrypt(legacy, validSecret, 3600);
+      expect(decrypted).toEqual(original);
+    });
   });
 
   describe('roundtrip integrity', () => {
@@ -463,9 +475,9 @@ describe('SessionCrypto - Async Methods', () => {
       const encrypted = await SessionCrypto.encrypt(original, validSecret);
 
       // Decode, change version byte, re-encode
-      const bytes = Buffer.from(encrypted, 'base64');
+      const bytes = Buffer.from(encrypted, 'base64url');
       bytes[0] = 99; // Invalid version
-      const modifiedEncrypted = bytes.toString('base64');
+      const modifiedEncrypted = bytes.toString('base64url');
 
       await expect(SessionCrypto.decrypt(modifiedEncrypted, validSecret, 3600)).rejects.toThrow(SessionCryptoError);
 

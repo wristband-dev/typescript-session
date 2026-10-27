@@ -10,7 +10,8 @@
   <p align="center">
     <b>
       <a href="https://wristband.dev">Website</a> • 
-      <a href="https://docs.wristband.dev/">Documentation</a>
+      <a href="https://docs.wristband.dev/">Documentation</a> • 
+      <a href="https://docs.wristband.dev/llms.txt">LLMs.txt</a>
     </b>
   </p>
 </div>
@@ -894,7 +895,7 @@ These methods work in Node.js environments (Express, Next.js Pages Router, etc.)
 
 ##### `save()`
 
-Encrypts session data and writes the cookie (mutates the response object). If 	`enableCsrfProtection` is `true` in the SDK configuration, a CSRF token is generated, stored in `session.csrfToken`, and written to the CSRF cookie.
+Encrypts session data and writes the cookie (mutates the response object). If 	`enableCsrfProtection` is `true` in the SDK configuration, a CSRF token is generated, stored in `session.csrfToken`, and written to the CSRF cookie. It also sets `Cache-Control: no-store` and `Pragma: no-cache` on the response, replacing any existing values. This prevents browsers and shared caches (such as CDNs and proxies) from storing a response that carries a user's session cookie and serving it to someone else. In deferred mode, the headers are set when `flush()` or `flushSync()` writes the cookies.
 
 > 💡 For Edge runtimes, use `saveToResponse()`.
 
@@ -918,7 +919,7 @@ await session.save();
 
 ##### `destroy()`
 
-Deletes the underlying session data as well as the session cookie from the response (mutates the response object).  If `enableCsrfProtection` is `true` in the SDK configuration, then the CSRF cookie is deleted as well.
+Deletes the underlying session data as well as the session cookie from the response (mutates the response object).  If `enableCsrfProtection` is `true` in the SDK configuration, then the CSRF cookie is deleted as well. It also sets `Cache-Control: no-store` and `Pragma: no-cache` on the response, replacing any existing values. This prevents browsers and shared caches (such as CDNs and proxies) from storing a response that carries a user's session cookie and serving it to someone else. In deferred mode, the headers are set when `flush()` or `flushSync()` writes the cookies.
 
 > 💡 For Edge runtimes, use `destroyToResponse()`.
 
@@ -953,7 +954,7 @@ await session.flush(); // Actually writes cookies
 
 ##### `flush()`
 
-Asynchronously flush pending session changes. Used with deferred mode.
+Asynchronously flush pending session changes. Used with deferred mode. When pending session cookies are written, it also sets `Cache-Control: no-store` and `Pragma: no-cache` on the response, replacing any existing values. This prevents browsers and shared caches (such as CDNs and proxies) from storing a response that carries a user's session cookie and serving it to someone else.
 
 ```typescript
 await session.flush();
@@ -975,7 +976,7 @@ await session.flush();
 
 ##### `flushSync()`
 
-Synchronously flush pending session changes using Node.js crypto. Used with deferred mode.
+Synchronously flush pending session changes using Node.js crypto. Used with deferred mode. When pending session cookies are written, it also sets `Cache-Control: no-store` and `Pragma: no-cache` on the response, replacing any existing values. This prevents browsers and shared caches (such as CDNs and proxies) from storing a response that carries a user's session cookie and serving it to someone else.
 
 ```typescript
 session.flushSync();
@@ -1002,7 +1003,7 @@ These methods work in Edge runtimes (Cloudflare Workers, Vercel Edge, Deno Deplo
 
 ##### `saveToResponse(response)`
 
-Encrypts session data and returns a new Response with the session cookie appended. If `enableCsrfProtection` is `true` in the SDK configuration, a CSRF token is generated, stored in `session.csrfToken`, and written to the CSRF cookie.
+Encrypts session data and returns a new Response with the session cookie appended. If `enableCsrfProtection` is `true` in the SDK configuration, a CSRF token is generated, stored in `session.csrfToken`, and written to the CSRF cookie. The returned Response also has `Cache-Control: no-store` and `Pragma: no-cache` set, replacing any existing values. This prevents browsers and shared caches (such as CDNs and proxies) from storing a response that carries a user's session cookie and serving it to someone else.
 
 > 💡 For Node.js runtimes, use `save()`.
 
@@ -1024,7 +1025,7 @@ return await session.saveToResponse(response);
 
 ##### `destroyToResponse(response)`
 
-Destroys the session and returns a new Response with deletion cookies appended. If `enableCsrfProtection` is `true` in the SDK configuration, then the CSRF cookie is deleted as well.
+Destroys the session and returns a new Response with deletion cookies appended. If `enableCsrfProtection` is `true` in the SDK configuration, then the CSRF cookie is deleted as well. The returned Response also has `Cache-Control: no-store` and `Pragma: no-cache` set, replacing any existing values. This prevents browsers and shared caches (such as CDNs and proxies) from storing a response that carries a user's session cookie and serving it to someone else.
 
 > 💡 For Node.js runtimes, use `destroy()`.
 
@@ -1052,7 +1053,7 @@ These are low-level methods for framework adapters that require manual cookie ma
 
 ##### `getCookieDataForSave()`
 
-Returns prepared cookie data for manual cookie setting (e.g., Next.js `cookies().set()`). If `enableCsrfProtection` is `true`, it will automatically generate a CSRF token and include the CSRF cookie data.
+Returns prepared cookie data for manual cookie setting (e.g., Next.js `cookies().set()`). If `enableCsrfProtection` is `true`, it will automatically generate a CSRF token and include the CSRF cookie data. This method does not set any cache headers, since it has no response object. Next.js already sends `Cache-Control: no-store` on every Server Action response.
 
 ```typescript
 'use server';
@@ -1103,7 +1104,7 @@ The returned array will contain:
 
 ##### `getCookieDataForDestroy()`
 
-Returns prepared cookie deletion data for manual cookie deletion. Returns cookies with empty values and expiration dates in the past. If `enableCsrfProtection` is `true`, includes CSRF cookie deletion data.
+Returns prepared cookie deletion data for manual cookie deletion. Returns cookies with empty values and expiration dates in the past. If `enableCsrfProtection` is `true`, includes CSRF cookie deletion data. This method does not set any cache headers, since it has no response object. Next.js already sends `Cache-Control: no-store` on every Server Action response.
 
 ```typescript
 const cookieData = session.getCookieDataForDestroy();
@@ -1660,7 +1661,7 @@ session.getCookieDataForSave()
 
 ### TypeScript Support
 
-The SDK is built with full TypeScript support and type safety. The `SessionData` interface includes optional Wristband fields, but you can extend it with any custom fields you want:
+The SDK is built with full TypeScript support and type safety. The `SessionData` interface includes optional Wristband fields, and you can extend it with any custom fields you want:
 
 ```typescript
 interface SessionData {
@@ -1675,11 +1676,10 @@ interface SessionData {
   expiresAt?: number;
   refreshToken?: string;
   csrfToken?: string;
-  
-  // Your custom fields
-  [key: string]: any;
 }
 ```
+
+Custom fields must be declared before they can be used. Accessing an undeclared field (e.g. `session.cartId`) is a type error until you add it with one of the approaches below.
 
 #### Custom Session Data Types
 
@@ -1767,6 +1767,7 @@ await session.save();
 | Session replay | ✅ Timestamp-based expiration |
 | Cookie tampering | ✅ Authenticated encryption detects modifications |
 | Brute force | ✅ 256-bit encryption provides strong protection |
+| Cached session cookies | ✅ `Cache-Control: no-store` and `Pragma: no-cache` set automatically whenever session cookies are written |
 
 <br>
 
@@ -1858,6 +1859,8 @@ app.get('/api/v1/session', async (req, res) => {
 }
 ```
 
+> 💡 This endpoint should always be protected by your auth middleware, which is responsible for setting `Cache-Control: no-store` and `Pragma: no-cache` on the response. If you aren't using the middleware from a Wristband auth SDK, set these headers yourself, since this response contains the user's session data and should never be cached.
+
 <br>
 
 ### Token Endpoint
@@ -1884,6 +1887,8 @@ app.get('/api/v1/token', async (req, res) => {
   "expiresAt": 1735689600000
 }
 ```
+
+> 💡 This endpoint should always be protected by your auth middleware, which is responsible for setting `Cache-Control: no-store` and `Pragma: no-cache` on the response. If you aren't using the middleware from a Wristband auth SDK, set these headers yourself, since this response contains the user's access token and should never be cached.
 
 Your frontend can use this token for direct API calls to Wristband or other services:
 

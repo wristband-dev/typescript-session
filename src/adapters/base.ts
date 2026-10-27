@@ -21,6 +21,7 @@ export abstract class BaseAdapter implements SessionAdapter {
 
   abstract readCookie(cookieName: string): string | undefined;
   abstract writeCookie(cookieName: string, value: string, options: CookieOptions): void;
+  abstract writeNoCacheHeaders(): void;
   abstract canWriteCookies(): boolean;
 }
 

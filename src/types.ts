@@ -566,15 +566,15 @@ export interface UserInfo {
   // Always returned - mapped from OIDC standard claims
   /** ID of the user (mapped from "sub" claim) */
   userId: string;
-  /** ID of the tenant that the user belongs to (mapped from "tnt_id") */
+  /** ID of the tenant that the user belongs to (mapped from "tnt_id" claim) */
   tenantId: string;
-  /** ID of the application that the user belongs to (mapped from "app_id") */
+  /** ID of the application that the user belongs to (mapped from "app_id" claim) */
   applicationId: string;
-  /** Name of the identity provider (mapped from "idp_name") */
+  /** Name of the identity provider (mapped from "idp_name" claim) */
   identityProviderName: string;
 
   // Profile scope - mapped to User entity field names
-  /** End-User's full name in displayable form (mapped from "name") */
+  /** End-User's full name in displayable form (mapped from "name" claim) */
   fullName?: string;
   /** Given name(s) or first name(s) of the End-User */
   givenName?: string;
@@ -617,8 +617,7 @@ export interface UserInfo {
 
   // Custom claims
   /** Object containing any configured custom claims */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  customClaims?: Record<string, any>;
+  customClaims?: Record<string, unknown>;
 }
 
 /**
@@ -667,8 +666,7 @@ export interface CallbackData {
   /** The URL to return to after authentication */
   returnUrl?: string;
   /** Custom state data preserved through the auth flow */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  customState?: Record<string, any>;
+  customState?: Record<string, unknown>;
   /** User information from the Wristband UserInfo endpoint */
   userinfo: UserInfo;
 }
@@ -737,6 +735,8 @@ export interface SessionAdapter {
   readCookie(cookieName: string): string | undefined;
   /** Write cookie to response */
   writeCookie(cookieName: string, value: string, options: CookieOptions): void;
+  /** Write the no-cache headers to response (called whenever session cookies are written) */
+  writeNoCacheHeaders(): void;
   /** Check if adapter can write cookies directly */
   canWriteCookies(): boolean;
 }

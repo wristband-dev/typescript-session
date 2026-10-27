@@ -1,3 +1,4 @@
+import { NO_CACHE_HEADERS } from './constants';
 import { CookieBuilder } from './cookie-builder';
 import { CookieParser } from './cookie-parser';
 import { createCsrfToken } from './csrf';
@@ -364,6 +365,8 @@ export class SessionImpl<T extends SessionData = SessionData> implements Session
           const csrfCookieOptions = CookieBuilder.forCsrf(this.#options);
           this.#adapter.writeCookie(this.#options.csrfCookieName, this.#data.csrfToken, csrfCookieOptions);
         }
+
+        this.#adapter.writeNoCacheHeaders();
       } catch (error) {
         const cause = error instanceof Error ? error : undefined;
         throw new SessionError(SessionErrorCode.SESSION_SAVE_FAILED, 'Failed to save session', cause);
@@ -444,6 +447,11 @@ export class SessionImpl<T extends SessionData = SessionData> implements Session
       newHeaders.append('set-cookie', csrfCookieHeader);
     }
 
+    // Prevent caching of a response that carries session cookies
+    Object.entries(NO_CACHE_HEADERS).forEach(([name, value]) => {
+      newHeaders.set(name, value);
+    });
+
     // Return created response with all cookie headers set
     return new Response(response.body, {
       status: response.status,
@@ -497,6 +505,11 @@ export class SessionImpl<T extends SessionData = SessionData> implements Session
       );
       newHeaders.append('set-cookie', csrfCookieHeader);
     }
+
+    // Prevent caching of a response that carries session cookies
+    Object.entries(NO_CACHE_HEADERS).forEach(([name, value]) => {
+      newHeaders.set(name, value);
+    });
 
     // Return created response with all cookie headers set
     return new Response(response.body, {
@@ -785,6 +798,8 @@ export class SessionImpl<T extends SessionData = SessionData> implements Session
     if (this.#options.enableCsrfProtection) {
       this.#adapter.writeCookie(this.#options.csrfCookieName, '', CookieBuilder.forCsrfDestroy(this.#options));
     }
+
+    this.#adapter.writeNoCacheHeaders();
   }
 
   /**
@@ -805,6 +820,8 @@ export class SessionImpl<T extends SessionData = SessionData> implements Session
           CookieBuilder.forCsrf(this.#options)
         );
       }
+
+      this.#adapter.writeNoCacheHeaders();
     } catch (error) {
       const cause = error instanceof Error ? error : undefined;
       throw new SessionError(SessionErrorCode.SESSION_SAVE_FAILED, 'Failed to save session', cause);
@@ -840,7 +857,7 @@ export class SessionImpl<T extends SessionData = SessionData> implements Session
       // Try to decrypt - this also validates TTL expiration.
       const data = await SessionCrypto.decryptWithSecrets(cookieValue, secrets, options.maxAge);
       return new SessionImpl<T>(data as T, adapter, options);
-    } catch (error) {
+    } catch {
       // If decryption or TTL validation fails, return new session.
       return new SessionImpl<T>({} as T, adapter, options);
     }
@@ -869,7 +886,7 @@ export class SessionImpl<T extends SessionData = SessionData> implements Session
     try {
       const data = SessionCrypto.decryptWithSecretsSync(cookieValue, secrets, options.maxAge);
       return new SessionImpl<T>(data as T, adapter, options);
-    } catch (error) {
+    } catch {
       return new SessionImpl<T>({} as T, adapter, options);
     }
   }

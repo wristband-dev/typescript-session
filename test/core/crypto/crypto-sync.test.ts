@@ -113,10 +113,10 @@ describe('SessionCrypto - Sync Methods', () => {
       expect(encrypted).toBeDefined();
     });
 
-    it('should produce base64-encoded output', () => {
+    it('should produce base64url-encoded output', () => {
       const encrypted = SessionCrypto.encryptSync({ userId: '123' }, validSecret);
-      // Base64 only contains A-Z, a-z, 0-9, +, /, =
-      expect(encrypted).toMatch(/^[A-Za-z0-9+/=]+$/);
+      // Base64url only contains A-Z, a-z, 0-9, -, _ (no padding)
+      expect(encrypted).toMatch(/^[A-Za-z0-9_-]+$/);
     });
 
     it('should throw SESSION_TOO_LARGE for very large session data', () => {
@@ -197,8 +197,9 @@ describe('SessionCrypto - Sync Methods', () => {
     it('should throw AUTH_FAILED for tampered data', () => {
       const original = { userId: '123' };
       const encrypted = SessionCrypto.encryptSync(original, validSecret);
-      // Tamper with the encrypted data
-      const tampered = encrypted.substring(0, 20) + 'X' + encrypted.substring(21);
+      // Tamper with the encrypted data (pick a character that always differs from the original)
+      const replacement = encrypted[20] === 'X' ? 'Y' : 'X';
+      const tampered = `${encrypted.substring(0, 20)}${replacement}${encrypted.substring(21)}`;
       expect(() => SessionCrypto.decryptSync(tampered, validSecret, 3600)).toThrow(SessionCryptoError);
 
       try {
@@ -299,9 +300,9 @@ describe('SessionCrypto - Sync Methods', () => {
       const encrypted = SessionCrypto.encryptSync(original, validSecret);
 
       // Decode, corrupt the encrypted data portion, re-encode
-      const bytes = Buffer.from(encrypted, 'base64');
+      const bytes = Buffer.from(encrypted, 'base64url');
       bytes[25] = bytes[25] ^ 0xff; // Corrupt encrypted data
-      const corrupted = bytes.toString('base64');
+      const corrupted = bytes.toString('base64url');
 
       expect(() => {
         SessionCrypto.decryptSync(corrupted, validSecret, 3600);
@@ -313,6 +314,18 @@ describe('SessionCrypto - Sync Methods', () => {
         expect((error as SessionCryptoError).code).toBe(SessionCryptoErrorCode.AUTH_FAILED);
         expect((error as SessionCryptoError).message).toBe('Failed to decrypt session data');
       }
+    });
+
+    it('should decrypt legacy standard base64-encoded session (backward compatibility)', () => {
+      const original = { userId: '123' };
+      const encrypted = SessionCrypto.encryptSync(original, validSecret);
+
+      // Re-encode as standard base64, the format used before base64url
+      const legacy = Buffer.from(encrypted, 'base64url').toString('base64');
+      expect(legacy).toContain('=');
+
+      const decrypted = SessionCrypto.decryptSync(legacy, validSecret, 3600);
+      expect(decrypted).toEqual(original);
     });
   });
 
@@ -523,9 +536,9 @@ describe('SessionCrypto - Sync Methods', () => {
       const encrypted = SessionCrypto.encryptSync(original, validSecret);
 
       // Decode, change version byte, re-encode
-      const bytes = Buffer.from(encrypted, 'base64');
+      const bytes = Buffer.from(encrypted, 'base64url');
       bytes[0] = 99;
-      const modifiedEncrypted = bytes.toString('base64');
+      const modifiedEncrypted = bytes.toString('base64url');
       expect(() => SessionCrypto.decryptSync(modifiedEncrypted, validSecret, 3600)).toThrow(SessionCryptoError);
 
       try {
@@ -540,7 +553,7 @@ describe('SessionCrypto - Sync Methods', () => {
   describe('Node crypto error handling', () => {
     it('should throw ENCRYPTION_FAILED when cipher operations fail', () => {
       // Mock Node crypto to make cipher fail
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      // eslint-disable-next-line @typescript-eslint/no-var-requires, @typescript-eslint/no-require-imports
       const crypto = require('node:crypto');
       const originalCreateCipheriv = crypto.createCipheriv;
       crypto.createCipheriv = jest.fn().mockImplementation(() => {

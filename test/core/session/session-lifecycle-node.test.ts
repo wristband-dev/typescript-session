@@ -1,4 +1,5 @@
 import { SessionError, SessionErrorCode } from '../../../src/error';
+import { SessionCrypto } from '../../../src/core/crypto';
 import { SessionImpl } from '../../../src/core/session';
 import { MockAdapter, mockOptions, TestSessionData } from '../../test-utils';
 
@@ -78,6 +79,55 @@ describe('SessionImpl - Lifecycle (Node.js)', () => {
       await session.save();
       expect(adapter.writeCookie).toHaveBeenCalledTimes(2);
     });
+
+    it('should write no-cache headers once, after writing the session cookie', async () => {
+      const session = SessionImpl.createNew<TestSessionData>(adapter as any, mockOptions);
+      session.set('userId', '123');
+      await session.save();
+      expect(adapter.writeNoCacheHeaders).toHaveBeenCalledTimes(1);
+      expect(adapter.writeNoCacheHeaders.mock.invocationCallOrder[0]).toBeGreaterThan(
+        adapter.writeCookie.mock.invocationCallOrder[0]
+      );
+    });
+
+    it('should write no-cache headers once when CSRF protection adds a second cookie', async () => {
+      const session = SessionImpl.createNew<TestSessionData>(adapter as any, {
+        ...mockOptions,
+        enableCsrfProtection: true,
+      });
+      session.set('userId', '123');
+      await session.save();
+      expect(adapter.writeCookie).toHaveBeenCalledTimes(2);
+      expect(adapter.writeNoCacheHeaders).toHaveBeenCalledTimes(1);
+    });
+
+    it('should not write no-cache headers when adapter cannot write cookies', async () => {
+      adapter.canWriteCookies.mockReturnValue(false);
+      const session = SessionImpl.createNew<TestSessionData>(adapter as any, mockOptions);
+      session.set('userId', '123');
+      await expect(session.save()).rejects.toThrow(SessionError);
+      expect(adapter.writeNoCacheHeaders).not.toHaveBeenCalled();
+    });
+
+    it('should throw SESSION_SAVE_FAILED and write nothing when encryption fails', async () => {
+      const encryptSpy = jest.spyOn(SessionCrypto, 'encrypt').mockRejectedValue(new Error('Encryption failed'));
+      const session = SessionImpl.createNew<TestSessionData>(adapter as any, mockOptions);
+      session.set('userId', '123');
+
+      try {
+        await session.save();
+        fail('Should have thrown');
+      } catch (error) {
+        expect(error).toBeInstanceOf(SessionError);
+        expect((error as SessionError).code).toBe(SessionErrorCode.SESSION_SAVE_FAILED);
+        expect((error as SessionError).message).toBe('Failed to save session');
+      } finally {
+        encryptSpy.mockRestore();
+      }
+
+      expect(adapter.writeCookie).not.toHaveBeenCalled();
+      expect(adapter.writeNoCacheHeaders).not.toHaveBeenCalled();
+    });
   });
 
   describe('destroy() - normal mode', () => {
@@ -113,6 +163,24 @@ describe('SessionImpl - Lifecycle (Node.js)', () => {
       session.destroy();
       session.destroy();
       expect(session.toJSON()).toEqual({});
+    });
+
+    it('should write no-cache headers once, after deleting the session cookie', () => {
+      const session = SessionImpl.createNew<TestSessionData>(adapter as any, mockOptions);
+      session.set('userId', '123');
+      session.destroy();
+      expect(adapter.writeNoCacheHeaders).toHaveBeenCalledTimes(1);
+      expect(adapter.writeNoCacheHeaders.mock.invocationCallOrder[0]).toBeGreaterThan(
+        adapter.writeCookie.mock.invocationCallOrder[0]
+      );
+    });
+
+    it('should not write no-cache headers if adapter cannot write', () => {
+      adapter.canWriteCookies.mockReturnValue(false);
+      const session = SessionImpl.createNew<TestSessionData>(adapter as any, mockOptions);
+      session.set('userId', '123');
+      session.destroy();
+      expect(adapter.writeNoCacheHeaders).not.toHaveBeenCalled();
     });
   });
 
@@ -161,6 +229,16 @@ describe('SessionImpl - Lifecycle (Node.js)', () => {
       // Flush should write only once with latest data
       await session.flush();
       expect(adapter.writeCookie).toHaveBeenCalledTimes(1);
+    });
+
+    it('should not write no-cache headers until flush', async () => {
+      const session = SessionImpl.createNew<TestSessionData>(adapter as any, mockOptions);
+      session.enableDeferredMode();
+      session.set('userId', '123');
+      await session.save();
+      expect(adapter.writeNoCacheHeaders).not.toHaveBeenCalled();
+      await session.flush();
+      expect(adapter.writeNoCacheHeaders).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -286,6 +364,31 @@ describe('SessionImpl - Lifecycle (Node.js)', () => {
       // Only first flush should write
       expect(adapter.writeCookie).toHaveBeenCalledTimes(1);
     });
+
+    it('should write no-cache headers once when flushing a save', async () => {
+      const session = SessionImpl.createNew<TestSessionData>(adapter as any, mockOptions);
+      session.enableDeferredMode();
+      session.set('userId', '123');
+      await session.save();
+      await session.flush();
+      expect(adapter.writeNoCacheHeaders).toHaveBeenCalledTimes(1);
+    });
+
+    it('should write no-cache headers once when flushing a destroy', async () => {
+      const session = SessionImpl.createNew<TestSessionData>(adapter as any, mockOptions);
+      session.enableDeferredMode();
+      session.set('userId', '123');
+      session.destroy();
+      await session.flush();
+      expect(adapter.writeNoCacheHeaders).toHaveBeenCalledTimes(1);
+    });
+
+    it('should not write no-cache headers if no operations were pending', async () => {
+      const session = SessionImpl.createNew<TestSessionData>(adapter as any, mockOptions);
+      session.enableDeferredMode();
+      await session.flush();
+      expect(adapter.writeNoCacheHeaders).not.toHaveBeenCalled();
+    });
   });
 
   describe('flushSync()', () => {
@@ -362,6 +465,77 @@ describe('SessionImpl - Lifecycle (Node.js)', () => {
         expect(error).toBeInstanceOf(SessionError);
         expect((error as SessionError).code).toBe(SessionErrorCode.MISSING_RESPONSE);
       }
+    });
+
+    it('should write no-cache headers once when flushing a save', async () => {
+      const session = SessionImpl.createNew<TestSessionData>(adapter as any, mockOptions);
+      session.enableDeferredMode();
+      session.set('userId', '123');
+      await session.save();
+      session.flushSync();
+      expect(adapter.writeNoCacheHeaders).toHaveBeenCalledTimes(1);
+      expect(adapter.writeNoCacheHeaders.mock.invocationCallOrder[0]).toBeGreaterThan(
+        adapter.writeCookie.mock.invocationCallOrder[0]
+      );
+    });
+
+    it('should write no-cache headers once when flushing a destroy', () => {
+      const session = SessionImpl.createNew<TestSessionData>(adapter as any, mockOptions);
+      session.enableDeferredMode();
+      session.set('userId', '123');
+      session.destroy();
+      session.flushSync();
+      expect(adapter.writeNoCacheHeaders).toHaveBeenCalledTimes(1);
+    });
+
+    it('should not write no-cache headers if no operations were pending', () => {
+      const session = SessionImpl.createNew<TestSessionData>(adapter as any, mockOptions);
+      session.enableDeferredMode();
+      session.flushSync();
+      expect(adapter.writeNoCacheHeaders).not.toHaveBeenCalled();
+    });
+
+    it('should write the CSRF cookie and no-cache headers once when CSRF protection is enabled', async () => {
+      const session = SessionImpl.createNew<TestSessionData>(adapter as any, {
+        ...mockOptions,
+        enableCsrfProtection: true,
+      });
+      session.enableDeferredMode();
+      session.set('userId', '123');
+      await session.save();
+      session.flushSync();
+
+      expect(adapter.writeCookie).toHaveBeenCalledTimes(2);
+      expect(adapter.writeCookie).toHaveBeenCalledWith('session', expect.any(String), expect.any(Object));
+      expect(adapter.writeCookie).toHaveBeenCalledWith('CSRF-TOKEN', expect.any(String), expect.any(Object));
+      expect(adapter.writeNoCacheHeaders).toHaveBeenCalledTimes(1);
+      expect(adapter.writeNoCacheHeaders.mock.invocationCallOrder[0]).toBeGreaterThan(
+        adapter.writeCookie.mock.invocationCallOrder[1]
+      );
+    });
+
+    it('should throw SESSION_SAVE_FAILED and write nothing when encryption fails', async () => {
+      const encryptSyncSpy = jest.spyOn(SessionCrypto, 'encryptSync').mockImplementation(() => {
+        throw new Error('Encryption failed');
+      });
+      const session = SessionImpl.createNew<TestSessionData>(adapter as any, mockOptions);
+      session.enableDeferredMode();
+      session.set('userId', '123');
+      await session.save();
+
+      try {
+        session.flushSync();
+        fail('Should have thrown');
+      } catch (error) {
+        expect(error).toBeInstanceOf(SessionError);
+        expect((error as SessionError).code).toBe(SessionErrorCode.SESSION_SAVE_FAILED);
+        expect((error as SessionError).message).toBe('Failed to save session');
+      } finally {
+        encryptSyncSpy.mockRestore();
+      }
+
+      expect(adapter.writeCookie).not.toHaveBeenCalled();
+      expect(adapter.writeNoCacheHeaders).not.toHaveBeenCalled();
     });
   });
 

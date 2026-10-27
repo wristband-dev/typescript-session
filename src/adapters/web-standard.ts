@@ -1,4 +1,5 @@
 import { BaseAdapter } from './base';
+import { NO_CACHE_HEADERS } from '../core/constants';
 import { CookieParser } from '../core/cookie-parser';
 import { SessionError, SessionErrorCode } from '../error';
 import { CookieOptions } from '../types';
@@ -59,6 +60,28 @@ export class WebStandardAdapter extends BaseAdapter {
     const response = this.response as Response;
     const cookieString = CookieParser.serialize(cookieName, value, options);
     response.headers.append('set-cookie', cookieString);
+  }
+
+  /**
+   * Writes the no-cache headers to the outgoing response.
+   *
+   * Sets Cache-Control and Pragma so that a response carrying session cookies is never
+   * stored by the browser or a shared cache. Called whenever session cookies are written.
+   * Uses headers.set, so calling it more than once does not create duplicate headers.
+   *
+   * @throws {SessionError} If no response object is available for writing headers
+   *
+   * @internal
+   */
+  writeNoCacheHeaders(): void {
+    if (!this.canWriteCookies()) {
+      throw new SessionError(SessionErrorCode.MISSING_RESPONSE, 'No response object available for writing headers');
+    }
+
+    const response = this.response as Response;
+    Object.entries(NO_CACHE_HEADERS).forEach(([name, value]) => {
+      response.headers.set(name, value);
+    });
   }
 
   /**

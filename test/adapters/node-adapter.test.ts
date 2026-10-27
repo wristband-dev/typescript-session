@@ -321,6 +321,75 @@ describe('NodeAdapter', () => {
     });
   });
 
+  describe('writeNoCacheHeaders()', () => {
+    it('should throw SessionError with MISSING_RESPONSE code when no response object', () => {
+      const req = createMockRequest();
+      const adapter = new NodeAdapter(req);
+
+      expect(() => adapter.writeNoCacheHeaders()).toThrow('No response object available for writing headers');
+      try {
+        adapter.writeNoCacheHeaders();
+        fail('Should have thrown');
+      } catch (error) {
+        expect(error).toBeInstanceOf(SessionError);
+        expect((error as SessionError).code).toBe(SessionErrorCode.MISSING_RESPONSE);
+      }
+    });
+
+    it('should set Cache-Control and Pragma headers', () => {
+      const req = createMockRequest();
+      const res = createMockResponse();
+      const adapter = new NodeAdapter(req, res);
+
+      adapter.writeNoCacheHeaders();
+
+      expect(res.getHeader('cache-control')).toBe('no-store');
+      expect(res.getHeader('pragma')).toBe('no-cache');
+    });
+
+    it('should replace an existing Cache-Control header', () => {
+      const req = createMockRequest();
+      const res = createMockResponse();
+      res.setHeader('Cache-Control', 'public, max-age=60');
+      const adapter = new NodeAdapter(req, res);
+
+      adapter.writeNoCacheHeaders();
+
+      expect(res.getHeader('cache-control')).toBe('no-store');
+    });
+
+    it('should not duplicate headers when called more than once', () => {
+      const req = createMockRequest();
+      const res = createMockResponse();
+      const adapter = new NodeAdapter(req, res);
+
+      adapter.writeNoCacheHeaders();
+      adapter.writeNoCacheHeaders();
+
+      expect(res.getHeader('cache-control')).toBe('no-store');
+      expect(res.getHeader('pragma')).toBe('no-cache');
+    });
+
+    it('should not change existing Set-Cookie headers', () => {
+      const req = createMockRequest();
+      const res = createMockResponse();
+      const adapter = new NodeAdapter(req, res);
+      const options: CookieOptions = {
+        maxAge: 3600,
+        path: '/',
+        secure: true,
+        httpOnly: true,
+        sameSite: 'Lax',
+      };
+
+      adapter.writeCookie('session', 'value123', options);
+      const setCookieBefore = res.getHeader('set-cookie');
+      adapter.writeNoCacheHeaders();
+
+      expect(res.getHeader('set-cookie')).toEqual(setCookieBefore);
+    });
+  });
+
   describe('canWriteCookies()', () => {
     it('should return false when no response object', () => {
       const req = createMockRequest();

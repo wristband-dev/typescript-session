@@ -66,6 +66,7 @@ export function createProxiedSession<T extends SessionData>(sessionImpl: Session
 
       // Return actual Session methods/properties
       if (prop in target || typeof prop === 'symbol') {
+        // eslint-disable-next-line @typescript-eslint/unbound-method -- methods are bound to the target below
         const value = target[prop as keyof SessionImpl<T>];
         if (typeof value === 'function') {
           return value.bind(target);
