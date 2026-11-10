@@ -656,6 +656,8 @@ export class SessionImpl<T extends SessionData = SessionData> implements Session
    * - tenantCustomDomain (if provided during auth request)
    *
    * Note:
+   * - Replaces any existing session data, including the CSRF token if CSRF protection is enabled
+   *   (a new one is generated on the next save)
    * - Custom fields are merged with core session fields
    * - All values must be JSON-serializable
    */
@@ -708,8 +710,8 @@ export class SessionImpl<T extends SessionData = SessionData> implements Session
       }
     }
 
-    // Copy all fields from sessionData to this.#data
-    Object.assign(this.#data, sessionData);
+    // Replace any existing session data with the new login's data
+    this.#data = sessionData as T;
   }
 
   /**

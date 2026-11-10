@@ -184,6 +184,48 @@ describe('SessionImpl - Wristband Integration', () => {
       expect(json).toHaveProperty('tenantName');
       expect(json).toHaveProperty('identityProviderName');
     });
+
+    it('should remove fields from an earlier login that the new login does not set', () => {
+      const session = SessionImpl.createNew<TestSessionData>(adapter as any, mockOptions);
+      session.fromCallback(
+        { ...mockCallbackData, refreshToken: 'refresh-token-123', tenantCustomDomain: 'custom.example.com' },
+        { customField: 'custom-value' }
+      );
+      expect(session.get('refreshToken')).toBe('refresh-token-123');
+      expect(session.get('tenantCustomDomain')).toBe('custom.example.com');
+      expect(session.get('customField')).toBe('custom-value');
+
+      session.fromCallback(mockCallbackData);
+      expect(session.get('refreshToken')).toBeUndefined();
+      expect(session.get('tenantCustomDomain')).toBeUndefined();
+      expect(session.get('customField')).toBeUndefined();
+      expect(session.get('userId')).toBe('user-123');
+    });
+
+    it('should remove data set before the login', () => {
+      const session = SessionImpl.createNew<TestSessionData>(adapter as any, mockOptions);
+      session.set('customField', 'pre-login-value');
+
+      session.fromCallback(mockCallbackData);
+      expect(session.get('customField')).toBeUndefined();
+    });
+
+    it('should drop the existing CSRF token and generate a new one on the next save', async () => {
+      const csrfOptions = { ...mockOptions, enableCsrfProtection: true };
+      const session = SessionImpl.createNew<TestSessionData>(adapter as any, csrfOptions);
+      session.fromCallback(mockCallbackData);
+      await session.save();
+      const firstCsrfToken = session.get('csrfToken');
+      expect(firstCsrfToken).toBeDefined();
+
+      session.fromCallback(mockCallbackData);
+      expect(session.get('csrfToken')).toBeUndefined();
+
+      await session.save();
+      const secondCsrfToken = session.get('csrfToken');
+      expect(secondCsrfToken).toBeDefined();
+      expect(secondCsrfToken).not.toBe(firstCsrfToken);
+    });
   });
 
   describe('getSessionResponse()', () => {

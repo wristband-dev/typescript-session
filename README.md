@@ -1135,7 +1135,7 @@ These methods are only relevant when using Wristband authentication for the [Bac
 
 ##### `fromCallback(callbackData, customFields?)`
 
-Populates session from Wristband authentication callback data.
+Populates session from Wristband authentication callback data. Any existing session data is replaced.
 
 ```typescript
 const callbackResult = await wristbandAuth.callback(req);
@@ -1606,7 +1606,7 @@ const session = await getSession(req, res, {
     'new-secret-key-min-32-characters-long',  // Used for NEW sessions
     'old-secret-key-min-32-characters-long',  // Used to DECRYPT old sessions
   ],
-  maxAge: 86400000,
+  maxAge: 86400,
 });
 ```
 
@@ -1822,7 +1822,7 @@ Extracts authentication data from the callback and stores it in the session:
 - `refreshToken`: Refresh token (if `offline_access` scope used)
 - `tenantCustomDomain`: Tenant custom domain (if applicable)
 
-Any custom fields you pass are merged with the core session data.
+Any custom fields you pass are merged with the core session data. Any data already in the session is replaced. If CSRF protection is enabled, the CSRF token also gets replaced on the next save with a newly-generated token.
 
 <br>
 
