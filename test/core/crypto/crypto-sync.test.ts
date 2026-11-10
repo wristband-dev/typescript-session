@@ -573,4 +573,49 @@ describe('SessionCrypto - Sync Methods', () => {
       }
     });
   });
+
+  describe('Node crypto loading', () => {
+    // The crypto module loads Node crypto once, when it is first imported, so each test loads a fresh copy.
+    function loadFreshSessionCrypto(): typeof SessionCrypto {
+      let freshSessionCrypto: typeof SessionCrypto | undefined;
+      jest.isolateModules(() => {
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
+        ({ SessionCrypto: freshSessionCrypto } = require('../../../src/core/crypto') as {
+          SessionCrypto: typeof SessionCrypto;
+        });
+      });
+      return freshSessionCrypto!;
+    }
+
+    it('should load Node crypto with process.getBuiltinModule() when available', () => {
+      const getBuiltinModuleSpy = jest.spyOn(process, 'getBuiltinModule');
+
+      try {
+        const FreshSessionCrypto = loadFreshSessionCrypto();
+        expect(getBuiltinModuleSpy).toHaveBeenCalledWith('node:crypto');
+
+        const encrypted = FreshSessionCrypto.encryptSync({ userId: '123' }, validSecret);
+        expect(FreshSessionCrypto.decryptSync(encrypted, validSecret, 3600)).toEqual({ userId: '123' });
+      } finally {
+        getBuiltinModuleSpy.mockRestore();
+      }
+    });
+
+    it('should fall back to require() when process.getBuiltinModule() is unavailable', () => {
+      const originalDescriptor = Object.getOwnPropertyDescriptor(process, 'getBuiltinModule');
+      // Simulate a Node version without process.getBuiltinModule() (before 20.16 / 22.3)
+      Object.defineProperty(process, 'getBuiltinModule', { value: undefined, configurable: true, writable: true });
+
+      try {
+        const FreshSessionCrypto = loadFreshSessionCrypto();
+
+        const encrypted = FreshSessionCrypto.encryptSync({ userId: '123' }, validSecret);
+        expect(FreshSessionCrypto.decryptSync(encrypted, validSecret, 3600)).toEqual({ userId: '123' });
+      } finally {
+        if (originalDescriptor) {
+          Object.defineProperty(process, 'getBuiltinModule', originalDescriptor);
+        }
+      }
+    });
+  });
 });
