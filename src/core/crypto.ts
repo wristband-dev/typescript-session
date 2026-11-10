@@ -2,11 +2,17 @@ import { Base64 } from './base64';
 import { SessionData } from '../types';
 import { SessionCryptoError, SessionCryptoErrorCode } from '../error';
 
-// Load Node's crypto module (required for synchronous methods in this class)
+// Load Node's crypto module (required for synchronous methods in this class).
+// process.getBuiltinModule() works in both ESM and CommonJS (22.3+).
+// require() is the fallback for CommonJS on older Node versions.
 let nodeCrypto: typeof import('crypto') | null = null;
 try {
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-require-imports
-  nodeCrypto = require('node:crypto');
+  const nodeProcess = globalThis.process;
+  nodeCrypto =
+    typeof nodeProcess?.getBuiltinModule === 'function'
+      ? nodeProcess.getBuiltinModule('node:crypto')
+      : // eslint-disable-next-line @typescript-eslint/no-require-imports
+        (require('node:crypto') as typeof import('crypto'));
 } catch {
   // Node crypto not available (Edge/browser environment)
   nodeCrypto = null;
